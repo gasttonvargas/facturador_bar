@@ -165,7 +165,8 @@ def login():
             session['user_id'] = user['id']
             session['username'] = user['username']
             session['rol'] = user['rol']
-            return redirect("/ventas")
+            return redirect("/")
+
         else:
             flash("Credenciales incorrectas", "danger")
     
