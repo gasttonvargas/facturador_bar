@@ -9,10 +9,6 @@ from contextlib import contextmanager
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "dev_secret")
 
-# ========== SOLUCIÓN AL ERROR "database is locked" ==========
-# 1. Timeout aumentado a 30 segundos
-# 2. Context manager para cerrar automáticamente
-# 3. check_same_thread=False para permitir múltiples hilos
 @contextmanager
 def get_db():
     """Context manager para manejar conexiones SQLite de forma segura"""
@@ -113,6 +109,8 @@ def init_db():
         """)
 
         con.commit()
+
+init_db() 
 
 # ---------- DECORADORES ----------
 def login_required(f):
@@ -600,5 +598,4 @@ def cerrar_turno():
 
 # ---------- MAIN ----------
 if __name__ == "__main__":
-    init_db()
     app.run(host="0.0.0.0")
