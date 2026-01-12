@@ -1,0 +1,210 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+.cocina-wrap {
+    max-width: 1400px;
+    margin: 20px auto;
+    padding: 20px;
+}
+
+h2 {
+    color: #1e1e1e;
+    margin-bottom: 25px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.pedidos-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 20px;
+}
+
+.pedido-card {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    border-left: 5px solid #ff6347;
+    animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+    from { transform: translateY(-20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+.pedido-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    padding-bottom: 15px;
+    border-bottom: 2px solid #f0f0f0;
+}
+
+.pedido-numero {
+    font-size: 24px;
+    font-weight: 700;
+    color: #1e1e1e;
+}
+
+.pedido-tipo {
+    font-size: 12px;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.tipo-mesa { background: #d4edda; color: #155724; }
+.tipo-delivery { background: #fff3cd; color: #856404; }
+.tipo-retiro { background: #d1ecf1; color: #0c5460; }
+
+.hora {
+    font-size: 13px;
+    color: #666;
+    margin-bottom: 15px;
+}
+
+.detalle-item {
+    padding: 10px;
+    margin-bottom: 8px;
+    background: #f8f8f8;
+    border-radius: 8px;
+    border-left: 3px solid #28a745;
+}
+
+.detalle-item strong {
+    display: block;
+    font-size: 16px;
+    margin-bottom: 4px;
+    color: #1e1e1e;
+}
+
+.detalle-extras {
+    font-size: 13px;
+    color: #666;
+    margin-top: 4px;
+    padding-left: 10px;
+}
+
+.detalle-obs {
+    font-size: 13px;
+    color: #dc3545;
+    font-weight: 600;
+    margin-top: 4px;
+    padding: 6px;
+    background: #fff3cd;
+    border-radius: 4px;
+}
+
+.direccion-entrega {
+    background: #fff3cd;
+    padding: 10px;
+    border-radius: 6px;
+    margin-top: 10px;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.btn-listo {
+    width: 100%;
+    padding: 15px;
+    background: #28a745;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    margin-top: 15px;
+    transition: 0.2s;
+}
+
+.btn-listo:hover {
+    background: #218838;
+    transform: translateY(-2px);
+}
+
+.no-pedidos {
+    text-align: center;
+    padding: 80px 20px;
+    background: white;
+    border-radius: 12px;
+    color: #999;
+}
+
+.no-pedidos h3 {
+    font-size: 24px;
+    margin-bottom: 10px;
+}
+</style>
+
+<div class="cocina-wrap">
+    <h2>
+        <span>🍳</span>
+        <span>Pedidos en Cocina ({{ ventas|length }})</span>
+    </h2>
+
+    {% if ventas %}
+    <div class="pedidos-grid">
+        {% for v in ventas %}
+        <div class="pedido-card">
+            <div class="pedido-header">
+                <div>
+                    <div class="pedido-numero">Pedido #{{ v.id }}</div>
+                    <span class="pedido-tipo tipo-{{ v.tipo_pedido }}">{{ v.tipo_pedido }}</span>
+                </div>
+            </div>
+
+            <div class="hora">⏰ {{ v.fecha_hora[11:16] if v.fecha_hora else 'Ahora' }}</div>
+
+            {% set items = v.detalle.split(', ') if v.detalle else [] %}
+            {% for item in items %}
+                {% if item %}
+                <div class="detalle-item">
+                    <strong>{{ item.split('[')[0].split('(')[0].strip() }}</strong>
+                    
+                    {% if '[' in item and ']' in item %}
+                        {% set extras = item.split('[')[1].split(']')[0] %}
+                        <div class="detalle-extras">✓ Con: {{ extras }}</div>
+                    {% endif %}
+                    
+                    {% if '(' in item and ')' in item %}
+                        {% set obs = item.split('(')[1].split(')')[0] %}
+                        <div class="detalle-obs">⚠️ {{ obs }}</div>
+                    {% endif %}
+                </div>
+                {% endif %}
+            {% endfor %}
+
+            {% if v.tipo_pedido == 'delivery' and v.direccion_entrega %}
+            <div class="direccion-entrega">
+                📍 {{ v.direccion_entrega }}
+            </div>
+            {% endif %}
+
+            <a href="/cocina/listo/{{ v.id }}" 
+               onclick="return confirm('¿Marcar pedido #{{ v.id }} como listo?')">
+                <button class="btn-listo">✅ Marcar como listo</button>
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="no-pedidos">
+        <h3>✅ Todo listo!</h3>
+        <p>No hay pedidos pendientes en cocina</p>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+// Auto-refresh cada 10 segundos
+setTimeout(() => location.reload(), 10000);
+</script>
+
+{% endblock %}

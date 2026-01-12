@@ -1,0 +1,189 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+*{box-sizing:border-box;font-family:Arial,sans-serif}
+body{background:#ececec;margin:0}
+
+.wrap{
+    max-width:1000px;
+    margin:20px auto;
+    background:white;
+    padding:20px;
+    border-radius:12px;
+}
+
+h2{margin-top:0}
+
+.grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:20px;
+}
+
+.productos{
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(160px,1fr));
+    gap:10px;
+}
+
+.prod{
+    border:1px solid #ddd;
+    border-radius:8px;
+    padding:10px;
+    text-align:center;
+}
+
+.prod strong{font-size:14px}
+.precio{color:#666;font-size:13px;margin-bottom:6px}
+
+.ctrl{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+}
+
+.ctrl button{
+    width:30px;height:30px;
+    font-size:18px;
+    border:none;
+    border-radius:6px;
+    background:#ddd;
+    cursor:pointer;
+}
+
+.ctrl input{
+    width:40px;
+    text-align:center;
+}
+
+.detalle{
+    background:#f7f7f7;
+    padding:10px;
+    border-radius:8px;
+}
+
+.item{
+    display:flex;
+    justify-content:space-between;
+    border-bottom:1px solid #ddd;
+    padding:5px 0;
+}
+
+.total{
+    font-size:22px;
+    text-align:right;
+    font-weight:bold;
+    margin-top:10px;
+}
+
+button{
+    width:100%;
+    padding:14px;
+    font-size:18px;
+    border:none;
+    border-radius:8px;
+    background:#28a745;
+    color:white;
+    cursor:pointer;
+    margin-top:15px;
+}
+
+a{
+    display:block;
+    text-align:center;
+    margin-top:10px;
+    text-decoration:none;
+}
+</style>
+
+<div class="wrap">
+
+<h2>✏ Editar venta #{{ venta.id }}</h2>
+
+<form method="post" id="formEdit">
+
+<div class="grid">
+
+<!-- ====== PRODUCTOS ====== -->
+<div>
+<h3>Productos</h3>
+
+<div class="productos">
+{% for p in productos %}
+{% set cant = 0 %}
+{% for d in detalle %}
+    {% if d.producto == p.nombre %}
+        {% set cant = d.cantidad %}
+    {% endif %}
+{% endfor %}
+
+<div class="prod" data-precio="{{ p.precio }}" data-nombre="{{ p.nombre }}">
+    <strong>{{ p.nombre }}</strong>
+    <div class="precio">${{ p.precio }}</div>
+
+    <div class="ctrl">
+        <button type="button" onclick="cambiar({{ p.id }},-1)">−</button>
+        <input type="number" min="0" name="prod_{{ p.id }}" id="prod_{{ p.id }}" value="{{ cant }}" oninput="render()">
+        <button type="button" onclick="cambiar({{ p.id }},1)">+</button>
+    </div>
+</div>
+{% endfor %}
+</div>
+</div>
+
+<!-- ====== DETALLE ====== -->
+<div>
+<h3>Detalle</h3>
+
+<div class="detalle" id="detalle"></div>
+<div class="total" id="total">$0</div>
+</div>
+
+</div>
+
+<button>Guardar cambios</button>
+<a href="/">⬅ Volver a ventas</a>
+
+</form>
+</div>
+
+<script>
+function cambiar(id,d){
+    let i=document.getElementById("prod_"+id);
+    let v=parseInt(i.value)||0;
+    v+=d;
+    if(v<0)v=0;
+    i.value=v;
+    render();
+}
+
+function render(){
+    let detalle=document.getElementById("detalle");
+    let totalBox=document.getElementById("total");
+    detalle.innerHTML="";
+    let total=0;
+
+    document.querySelectorAll(".prod").forEach(p=>{
+        let input=p.querySelector("input");
+        let cant=parseInt(input.value)||0;
+        if(cant>0){
+            let nombre=p.dataset.nombre;
+            let precio=parseInt(p.dataset.precio);
+            total+=cant*precio;
+            detalle.innerHTML+=`
+                <div class="item">
+                    <span>${cant} × ${nombre}</span>
+                    <span>$${cant*precio}</span>
+                </div>
+            `;
+        }
+    });
+
+    totalBox.innerText="$"+total;
+}
+
+render();
+</script>
+
+{% endblock %}

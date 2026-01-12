@@ -1,0 +1,196 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+.wrap{
+    max-width:1200px;
+    margin:20px auto;
+    background:white;
+    padding:25px;
+    border-radius:12px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+}
+
+h2 {
+    margin-bottom: 25px;
+    color: #1e1e1e;
+}
+
+form {
+    display:grid;
+    grid-template-columns:2fr 1fr 1fr 1fr 1fr;
+    gap:10px;
+    margin-bottom:30px;
+    padding: 20px;
+    background: #f8f8f8;
+    border-radius: 8px;
+}
+
+input, select {
+    padding:12px;
+    font-size:14px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+}
+
+button {
+    padding:12px 20px;
+    background:#28a745;
+    color:white;
+    border:none;
+    border-radius:6px;
+    cursor:pointer;
+    font-weight: 600;
+    transition: 0.2s;
+}
+
+button:hover {
+    background: #218838;
+}
+
+table{
+    width:100%;
+    border-collapse:collapse;
+}
+
+thead {
+    background: #f8f8f8;
+}
+
+th,td{
+    padding:12px;
+    border-bottom:1px solid #e0e0e0;
+    text-align:left;
+}
+
+th {
+    font-weight: 700;
+    color: #666;
+    font-size: 13px;
+    text-transform: uppercase;
+}
+
+tr:hover {
+    background: #f8f8f8;
+}
+
+.tipo-badge {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.tipo-normal {
+    background: #e0e0e0;
+    color: #666;
+}
+
+.tipo-sanguche {
+    background: #d4edda;
+    color: #155724;
+}
+
+.tipo-especial {
+    background: #fff3cd;
+    color: #856404;
+}
+
+a.btn{
+    padding:6px 12px;
+    background:#007bff;
+    color:white;
+    border-radius:6px;
+    text-decoration:none;
+    margin-right:5px;
+    font-size: 12px;
+    font-weight: 600;
+    transition: 0.2s;
+}
+
+a.btn:hover {
+    background: #0056b3;
+}
+
+a.del{
+    background:#dc3545;
+}
+
+a.del:hover {
+    background: #c82333;
+}
+
+.categoria-filter {
+    margin-bottom: 20px;
+}
+
+.categoria-filter select {
+    padding: 10px;
+    font-size: 14px;
+}
+</style>
+
+<div class="wrap">
+
+<h2>📦 Gestión de Productos</h2>
+
+<form method="post">
+    <input name="nombre" placeholder="Nombre del producto" required>
+    <input name="precio" type="number" placeholder="Precio" required>
+    <input name="categoria" placeholder="Categoría" required>
+    <select name="tipo" required>
+        <option value="normal">Normal</option>
+        <option value="sanguche">Sanguche</option>
+        <option value="especial">Especial</option>
+    </select>
+    <button>➕ Agregar</button>
+</form>
+
+<table>
+<thead>
+<tr>
+    <th>Nombre</th>
+    <th>Precio</th>
+    <th>Categoría</th>
+    <th>Tipo</th>
+    <th>Acciones</th>
+</tr>
+</thead>
+<tbody>
+{% for p in productos %}
+<tr>
+    <td><strong>{{ p.nombre }}</strong></td>
+    <td>${{ p.precio }}</td>
+    <td>{{ p.categoria }}</td>
+    <td>
+        <span class="tipo-badge tipo-{{ p.tipo or 'normal' }}">
+            {{ p.tipo or 'normal' }}
+        </span>
+    </td>
+    <td>
+        <a class="btn" href="/editar_producto/{{ p.id }}">✏️ Editar</a>
+        <a class="btn del" href="/eliminar_producto/{{ p.id }}"
+           onclick="return confirm('¿Eliminar {{ p.nombre }}?')">
+           🗑️ Eliminar
+        </a>
+    </td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+
+<div style="margin-top: 20px; padding: 15px; background: #e7f3ff; border-radius: 8px;">
+    <strong>ℹ️ Tipos de productos:</strong>
+    <ul style="margin: 10px 0; padding-left: 20px;">
+        <li><strong>Normal:</strong> Productos estándar sin opciones especiales</li>
+        <li><strong>Sanguche:</strong> Permite seleccionar extras (lechuga, tomate, mayonesa, etc.)</li>
+        <li><strong>Especial:</strong> Permite seleccionar ingredientes completos (jamón, queso, huevo, papas, etc.)</li>
+    </ul>
+</div>
+
+<a href="/" style="display: inline-block; margin-top: 20px; text-decoration: none; color: #007bff;">⬅️ Volver a ventas</a>
+
+</div>
+{% endblock %}

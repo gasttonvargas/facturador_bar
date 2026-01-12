@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+.wrap {
+    max-width: 900px;
+    margin: 40px auto;
+    padding: 30px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+h2 {
+    text-align: center;
+    color: #28a745;
+    font-size: 32px;
+    margin-bottom: 30px;
+}
+
+.total-general {
+    background: linear-gradient(135deg, #28a745, #20c997);
+    color: white;
+    padding: 30px;
+    border-radius: 12px;
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.total-general .label {
+    font-size: 18px;
+    opacity: 0.9;
+    margin-bottom: 10px;
+}
+
+.total-general .monto {
+    font-size: 48px;
+    font-weight: 700;
+}
+
+h3 {
+    margin: 30px 0 15px;
+    color: #1e1e1e;
+    font-size: 22px;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 30px;
+}
+
+th {
+    background: #f8f9fa;
+    padding: 15px;
+    text-align: left;
+    font-weight: 700;
+    border-bottom: 2px solid #dee2e6;
+}
+
+td {
+    padding: 12px 15px;
+    border-bottom: 1px solid #dee2e6;
+}
+
+tr:hover {
+    background: #f8f9fa;
+}
+
+.btn {
+    display: block;
+    width: 100%;
+    padding: 15px;
+    background: #007bff;
+    color: white;
+    text-align: center;
+    text-decoration: none;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 16px;
+    margin-top: 20px;
+}
+
+.btn:hover {
+    background: #0056b3;
+}
+</style>
+
+<div class="wrap">
+    <h2>✅ Turno Cerrado</h2>
+
+    <div class="total-general">
+        <div class="label">TOTAL DEL TURNO #{{ turno.id }}</div>
+        <div class="monto">${{ total }}</div>
+        <p style="margin-top: 15px; font-size: 14px; opacity: 0.8;">
+            Fecha: {{ turno.fecha }}
+        </p>
+    </div>
+
+    <h3>📊 Detalle por Producto</h3>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Producto</th>
+                <th style="text-align: center;">Cantidad</th>
+                <th style="text-align: right;">Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for d in detalle %}
+            <tr>
+                <td><strong>{{ d.producto }}</strong></td>
+                <td style="text-align: center; font-weight: 700;">{{ d.cantidad }}</td>
+                <td style="text-align: right; font-weight: 700; color: #28a745;">${{ d.total }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <a href="/turnos" class="btn">Ver Historial de Turnos</a>
+</div>
+
+{% endblock %}

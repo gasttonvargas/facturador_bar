@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Menú - LaVespucio</title>
+<style>
+* {margin:0; padding:0; box-sizing:border-box;}
+body {font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f4f4f4; padding:20px;}
+.container {max-width:600px; margin:0 auto; background:white; border-radius:12px; box-shadow:0 10px 30px rgba(0,0,0,0.1);}
+.header {padding:20px; text-align:center; background:#28a745; color:white; border-radius:12px 12px 0 0;}
+.header h1 {margin-bottom:5px;}
+.content {padding:20px; max-height:65vh; overflow-y:auto;}
+.categoria {margin-bottom:25px;}
+.categoria-title {font-weight:700; color:#28a745; margin-bottom:10px; font-size:18px;}
+
+/* Producto card */
+.producto {
+    padding:12px; 
+    margin-bottom:12px; 
+    background:#f8f8f8; 
+    border-radius:10px; 
+    border:2px solid transparent; 
+    transition: all 0.3s;
+}
+.producto.selected {border-color:#28a745; background:#d4edda;}
+
+.producto-header {
+    display:flex; 
+    justify-content:space-between; 
+    align-items:center;
+    margin-bottom:8px;
+}
+
+.producto-info strong {display:block; font-size:16px; margin-bottom:2px;}
+.producto-info .precio {color:#666; font-size:14px;}
+
+.producto-controls {display:flex; align-items:center; gap:10px;}
+.btn-qty {
+    width:35px; height:35px; 
+    border-radius:50%; 
+    border:none; 
+    background:#28a745; 
+    color:white; 
+    font-size:20px; 
+    font-weight:700; 
+    cursor:pointer;
+    transition: 0.2s;
+}
+.btn-qty:active {transform:scale(0.95);}
+.qty-display {min-width:30px; text-align:center; font-weight:700; font-size:18px;}
+
+/* Extras container */
+.extras-container {
+    display:none; 
+    margin-top:10px; 
+    padding:12px; 
+    background:#fff3cd; 
+    border-radius:8px;
+}
+.extras-container.show {display:block;}
+.extras-title {font-size:14px; font-weight:700; margin-bottom:8px; color:#856404;}
+
+.extras-grid {
+    display:grid; 
+    grid-template-columns:repeat(2,1fr); 
+    gap:8px;
+    margin-bottom:10px;
+}
+
+.extra-item {
+    font-size:14px; 
+    display:flex; 
+    align-items:center; 
+    gap:6px;
+    padding:4px;
+}
+.extra-item input[type="checkbox"] {width:18px; height:18px; cursor:pointer;}
+.extra-item label {cursor:pointer;}
+
+/* Opciones especial */
+.especial-opciones {
+    display:none;
+    margin-top:10px;
+    padding:12px;
+    background:#d1ecf1;
+    border-radius:8px;
+}
+.especial-opciones.show {display:block;}
+.especial-title {font-size:14px; font-weight:700; margin-bottom:8px; color:#0c5460;}
+
+.btn-todo {
+    width:100%;
+    padding:8px;
+    background:#17a2b8;
+    color:white;
+    border:none;
+    border-radius:6px;
+    margin-bottom:8px;
+    cursor:pointer;
+    font-weight:600;
+}
+
+/* Observaciones */
+.observaciones {
+    margin-top:8px;
+}
+.observaciones textarea {
+    width:100%;
+    padding:8px;
+    border:1px solid #ddd;
+    border-radius:6px;
+    font-size:13px;
+    resize:none;
+    font-family:inherit;
+}
+
+.footer {padding:15px; border-top:2px solid #eee; background:#fafafa;}
+.total {
+    display:flex; 
+    justify-content:space-between; 
+    align-items:center; 
+    font-size:22px; 
+    font-weight:700; 
+    margin-bottom:12px;
+}
+.btn-enviar {
+    width:100%; 
+    padding:16px; 
+    background:#28a745; 
+    color:white; 
+    border:none; 
+    border-radius:10px; 
+    font-size:18px; 
+    font-weight:700; 
+    cursor:pointer;
+    transition: 0.3s;
+}
+.btn-enviar:disabled {background:#ccc; cursor:not-allowed;}
+.btn-enviar:active:not(:disabled) {transform:scale(0.98);}
+/* ===== MODAL PEDIDO ENVIADO ===== */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.6);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+}
+
+.modal-overlay.show {
+    display: flex;
+}
+
+.modal {
+    background: #fff;
+    padding: 25px;
+    border-radius: 14px;
+    text-align: center;
+    max-width: 320px;
+    width: 90%;
+    animation: modalPop 0.25s ease;
+}
+
+.modal h2 {
+    color: #28a745;
+    margin-bottom: 10px;
+}
+
+.modal p {
+    font-size: 16px;
+    margin: 6px 0;
+}
+
+.modal button {
+    margin-top: 15px;
+    padding: 12px;
+    width: 100%;
+    border: none;
+    border-radius: 8px;
+    background: #28a745;
+    color: white;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.modal-overlay {
+    touch-action: none;
+}
+
+
+@keyframes modalPop {
+    from { transform: scale(0.85); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+
+</style>
+</head>
+
+<body>
+
+    <!-- MODAL PEDIDO ENVIADO -->
+<div class="modal-overlay" id="modalPedido">
+    <div class="modal">
+        <h2>Pedido enviado ✅</h2>
+        <p>Mesa: <strong>{{ mesa }}</strong></p>
+        <p>Total: $ <strong id="modalTotal">0</strong></p>
+        <button id="btnCerrarModal">Aceptar</button>
+    </div>
+</div>
+
+<form method="POST" id="formPedido">
+<div class="container">
+    <div class="header">
+        <h1>🍔 LaVespucio</h1>
+        <p>Mesa {{ mesa }} - Hacé tu pedido</p>
+    </div>
+
+    <div class="content" id="productos-container">
+        {% for categoria, items in categorias.items() %}
+        <div class="categoria">
+            <h2 class="categoria-title">{{ categoria }}</h2>
+            
+            {% for p in items %}
+            <div class="producto" data-id="{{ p.id }}" data-nombre="{{ p.nombre }}" data-precio="{{ p.precio }}" data-tipo="{{ p.tipo }}">
+                
+                <div class="producto-header">
+                    <div class="producto-info">
+                        <strong>{{ p.nombre }}</strong>
+                        <span class="precio">$ {{ p.precio }}</span>
+                    </div>
+                    <div class="producto-controls">
+                        <button type="button" class="btn-qty btn-menos">−</button>
+                        <input type="hidden" name="prod_{{ p.id }}" value="0">
+                        <span class="qty-display">0</span>
+                        <button type="button" class="btn-qty btn-mas">+</button>
+                    </div>
+                </div>
+
+                <!-- EXTRAS PARA SANGUCHES -->
+                {% if 'Milanesa' in p.nombre or 'Lomito' in p.nombre or 'Hamburguesa' in p.nombre %}
+                <div class="extras-container">
+                    <div class="extras-title">¿Qué lleva?</div>
+                    <div class="extras-grid">
+                        <div class="extra-item">
+                            <input type="checkbox" id="lechuga_{{ p.id }}" value="lechuga">
+                            <label for="lechuga_{{ p.id }}">Lechuga</label>
+                        </div>
+                        <div class="extra-item">
+                            <input type="checkbox" id="tomate_{{ p.id }}" value="tomate">
+                            <label for="tomate_{{ p.id }}">Tomate</label>
+                        </div>
+                        <div class="extra-item">
+                            <input type="checkbox" id="mayonesa_{{ p.id }}" value="mayonesa">
+                            <label for="mayonesa_{{ p.id }}">Mayonesa</label>
+                        </div>
+                        <div class="extra-item">
+                            <input type="checkbox" id="savora_{{ p.id }}" value="savora">
+                            <label for="savora_{{ p.id }}">Savora</label>
+                        </div>
+                        <div class="extra-item">
+                            <input type="checkbox" id="ketchup_{{ p.id }}" value="ketchup">
+                            <label for="ketchup_{{ p.id }}">Ketchup</label>
+                        </div>
+                        <div class="extra-item">
+                            <input type="checkbox" id="aji_{{ p.id }}" value="ají">
+                            <label for="aji_{{ p.id }}">Ají</label>
+                        </div>
+                    </div>
+                    <div class="observaciones">
+                        <textarea placeholder="Observaciones (ej: mitad aji, mitad sin aji, pan bien tostado)" rows="2" class="obs-textarea"></textarea>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- OPCIONES PARA ESPECIAL -->
+                {% if 'Especial' in p.nombre %}
+                <div class="especial-opciones">
+                    <div class="especial-title">Ingredientes Especial</div>
+                    <button type="button" class="btn-todo">✓ Todo</button>
+                    <div class="extras-grid">
+                        <div class="extra-item">
+                            <input type="checkbox" id="jamon_{{ p.id }}" value="jamón">
+                            <label for="jamon_{{ p.id }}">Jamón</label>
+                        </div>
+                        <div class="extra-item">
+                            <input type="checkbox" id="queso_{{ p.id }}" value="queso">
+                            <label for="queso_{{ p.id }}">Queso</label>
+                        </div>
+                        <div class="extra-item">
+                            <input type="checkbox" id="huevo_{{ p.id }}" value="huevo">
+                            <label for="huevo_{{ p.id }}">Huevo</label>
+                        </div>
+                        <div class="extra-item">
+                            <input type="checkbox" id="papas_{{ p.id }}" value="papas">
+                            <label for="papas_{{ p.id }}">Papas</label>
+                        </div>
+                        <div class="extra-item">
+                            <input type="checkbox" id="lechuga_esp_{{ p.id }}" value="lechuga">
+                            <label for="lechuga_esp_{{ p.id }}">Lechuga</label>
+                        </div>
+                        <div class="extra-item">
+                            <input type="checkbox" id="tomate_esp_{{ p.id }}" value="tomate">
+                            <label for="tomate_esp_{{ p.id }}">Tomate</label>
+                        </div>
+                        <div class="extra-item">
+                            <input type="checkbox" id="mayonesa_esp_{{ p.id }}" value="mayonesa">
+                            <label for="mayonesa_esp_{{ p.id }}">Mayonesa</label>
+                        </div>
+                        <div class="extra-item">
+                            <input type="checkbox" id="savora_esp_{{ p.id }}" value="savora">
+                            <label for="savora_esp_{{ p.id }}">Savora</label>
+                        </div>
+                        <div class="extra-item">
+                            <input type="checkbox" id="ketchup_esp_{{ p.id }}" value="ketchup">
+                            <label for="ketchup_esp_{{ p.id }}">Ketchup</label>
+                        </div>
+                        <div class="extra-item">
+                            <input type="checkbox" id="aji_esp_{{ p.id }}" value="ají">
+                            <label for="aji_esp_{{ p.id }}">Ají</label>
+                        </div>
+                    </div>
+                    <div class="observaciones">
+                        <textarea placeholder="Observaciones adicionales" rows="2" class="obs-textarea"></textarea>
+                    </div>
+                </div>
+                {% endif %}
+
+            </div>
+            {% endfor %}
+        </div>
+        {% endfor %}
+    </div>
+
+    <div class="footer">
+        <div class="total">Total: $ <span id="total">0</span></div>
+        <button type="submit" class="btn-enviar" disabled>🛒 Enviar pedido</button>
+    </div>
+</div>
+</form>
+
+<script>
+let productos = document.querySelectorAll('.producto');
+let totalEl = document.getElementById('total');
+let enviarBtn = document.querySelector('.btn-enviar');
+
+function actualizarTotal() {
+    let total = 0;
+    productos.forEach(p => {
+        let qtyDisplay = p.querySelector('.qty-display');
+        let qty = parseInt(qtyDisplay.textContent);
+        if(qty > 0) {
+            let precio = parseInt(p.dataset.precio);
+            total += precio * qty;
+        }
+    });
+    totalEl.textContent = total;
+    enviarBtn.disabled = total === 0;
+}
+
+productos.forEach(p => {
+    let btnMas = p.querySelector('.btn-mas');
+    let btnMenos = p.querySelector('.btn-menos');
+    let qtyDisplay = p.querySelector('.qty-display');
+    let qtyInput = p.querySelector('input[type="hidden"]');
+    let extrasContainer = p.querySelector('.extras-container');
+    let especialContainer = p.querySelector('.especial-opciones');
+    let btnTodo = p.querySelector('.btn-todo');
+
+    // Botón más
+    btnMas.addEventListener('click', () => {
+        let qty = parseInt(qtyDisplay.textContent);
+        qty++;
+        qtyDisplay.textContent = qty;
+        qtyInput.value = qty;
+        
+        if(qty > 0) { 
+            p.classList.add('selected');
+            if(extrasContainer) extrasContainer.classList.add('show');
+            if(especialContainer) especialContainer.classList.add('show');
+        }
+        actualizarTotal();
+    });
+
+    // Botón menos
+    btnMenos.addEventListener('click', () => {
+        let qty = parseInt(qtyDisplay.textContent);
+        if(qty > 0) qty--;
+        qtyDisplay.textContent = qty;
+        qtyInput.value = qty;
+        
+        if(qty === 0) { 
+            p.classList.remove('selected');
+            if(extrasContainer) extrasContainer.classList.remove('show');
+            if(especialContainer) especialContainer.classList.remove('show');
+        }
+        actualizarTotal();
+    });
+
+    // Botón "TODO" para especiales
+    if(btnTodo) {
+        btnTodo.addEventListener('click', () => {
+            let checkboxes = especialContainer.querySelectorAll('input[type="checkbox"]');
+            let allChecked = Array.from(checkboxes).every(cb => cb.checked);
+            checkboxes.forEach(cb => cb.checked = !allChecked);
+        });
+    }
+});
+
+// Enviar formulario
+document.getElementById('formPedido').addEventListener('submit', (e) => {
+    e.preventDefault();
+    
+    let formData = new FormData();
+    
+    productos.forEach(p => {
+        let qty = parseInt(p.querySelector('.qty-display').textContent);
+        let id = p.dataset.id;
+        
+        formData.append(`prod_${id}`, qty);
+        
+        if(qty > 0) {
+            // Recoger extras
+            let extras = [];
+            p.querySelectorAll('input[type="checkbox"]:checked').forEach(cb => {
+                extras.push(cb.value);
+            });
+            formData.append(`extras_${id}`, extras.join(', '));
+            
+            // Recoger observaciones
+            let obsTextarea = p.querySelector('.obs-textarea');
+            if(obsTextarea && obsTextarea.value.trim()) {
+                formData.append(`obs_${id}`, obsTextarea.value.trim());
+            }
+        }
+    });
+    
+    // Enviar con fetch
+    fetch(window.location.pathname, {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => {
+        if(response.ok) {
+            return response.text();
+        }
+        throw new Error('Error al enviar pedido');
+    })
+    .then(() => {
+    document.getElementById('modalTotal').textContent = totalEl.textContent;
+    document.getElementById('modalPedido').classList.add('show');
+})
+    .catch(err => {
+        alert('Error: ' + err.message);
+    });
+});
+document.getElementById('btnCerrarModal').addEventListener('click', () => {
+    location.reload();
+});
+</script>
+</body>
+</html>

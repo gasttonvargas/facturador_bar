@@ -1,0 +1,185 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+.wrap {
+    max-width: 1200px;
+    margin: 20px auto;
+    padding: 20px;
+}
+
+h2 {
+    margin-bottom: 25px;
+    color: #1e1e1e;
+}
+
+.pedidos-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 20px;
+}
+
+.pedido-card {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    border-left: 5px solid #ffc107;
+}
+
+.pedido-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    padding-bottom: 15px;
+    border-bottom: 2px solid #f0f0f0;
+}
+
+.mesa {
+    font-size: 24px;
+    font-weight: 700;
+    color: #1e1e1e;
+}
+
+.hora {
+    font-size: 13px;
+    color: #666;
+}
+
+.detalle-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid #eee;
+}
+
+.detalle-item:last-child {
+    border-bottom: none;
+}
+
+.total-pedido {
+    font-size: 20px;
+    font-weight: 700;
+    text-align: right;
+    margin-top: 15px;
+    color: #28a745;
+}
+
+.acciones {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.btn {
+    flex: 1;
+    padding: 12px;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    display: block;
+    text-align: center;
+}
+
+.btn-confirmar {
+    background: #28a745;
+    color: white;
+}
+
+.btn-cancelar {
+    background: #dc3545;
+    color: white;
+}
+
+.no-pedidos {
+    text-align: center;
+    padding: 60px 20px;
+    background: white;
+    border-radius: 12px;
+    color: #999;
+}
+
+.badge-pendiente {
+    background: #fff3cd;
+    color: #856404;
+    padding: 5px 12px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+}
+</style>
+
+<div class="wrap">
+    <h2>🔔 Pedidos Pendientes ({{ pedidos|length }})</h2>
+
+    {% if pedidos %}
+    <div class="pedidos-grid">
+        {% for p in pedidos %}
+        <div class="pedido-card">
+            <div class="pedido-header">
+                <div>
+                    <div class="mesa">🍽 Mesa {{ p.mesa }}</div>
+                    <div class="hora">{{ p.fecha_hora[11:16] }}</div>
+                </div>
+                <span class="badge-pendiente">PENDIENTE</span>
+            </div>
+
+            {% for d in p.detalle %}
+            <div class="detalle-item">
+                <span><strong>{{ d.cantidad }}x</strong> {{ d.producto }}</span>
+                <span>${{ d.cantidad * d.precio }}</span>
+            </div>
+            {% endfor %}
+
+            <div class="total-pedido">TOTAL: ${{ p.total }}</div>
+
+            <div class="acciones">
+                <a href="/pedidos/confirmar/{{ p.id }}" class="btn btn-confirmar"
+                   onclick="return confirm('¿Confirmar pedido Mesa {{ p.mesa }}?')">
+                    ✓ Confirmar
+                </a>
+                <a href="/pedidos/cancelar/{{ p.id }}" class="btn btn-cancelar"
+                   onclick="return confirm('¿Cancelar pedido?')">
+                    ✗ Cancelar
+                </a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="no-pedidos">
+        <h3>✅ No hay pedidos pendientes</h3>
+        <p>Los nuevos pedidos aparecerán aquí automáticamente</p>
+    </div>
+    {% endif %}
+</div>
+
+<!-- SONIDO DE NOTIFICACIÓN -->
+<audio id="sonido-pedido" preload="auto">
+    <source src="data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBjGJ0fPTgjMGHGi56+OZTQwOUKXh8LJnIQQ4jtHv0HouBShy1PLXkz8HE1u56OihUxMLRJnd8rloHgU1kNXzzIIxBh1sv+vhmU0OD1Cn4O+wZiAENIvN8NF9LgUnb9Hw2ZRACxdju+jnnU8NAz+Y3/LCaiEGNI/T88p/MAceb8Ho4JdPDAxPpuDwsGgfBDOKzvDSfiwGKHLU8tiSQAkTV7zn6KFSEw1EnNnytmwgBjKN1PLKgDEGHm/A7OCXUAwMTqXh8K1oIAQ0i8/v0n4rBilw1fHXlUAJFFm86OajUxINQ5vb8bVsFwcyjNTxzIAyBx5wwfDil04MDU2l4O+rZh8GNIvP8dR+LAYocNPy2JNBB xVYu+fnpFITDUSa3PG2axcGMIrT8c1+MQYfccPx4JlODA1NpePwrGYfBjOLz/HUfywGJ2/V8dmUQAoUV7zn56NSEg1Em9zytnMXBjCK0/HOfjEHH3DC8uGYTwwNTKPi8K5mHwUziM7x1H8sBipv1PLYlD8LFFe76OajUhINRJrb8rVyFwYviM/xzn0xBh9wwvLhmU4MDUuk4u+taB8FNIjO8NR/KwYpbdPy2ZNACxVYuufoollEg9Dmnz0KAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA" type="audio/wav">
+</audio>
+
+<script>
+let ultimoConteo = {{ pedidos|length }};
+
+function verificarNuevosPedidos() {
+    fetch('/api/pedidos/nuevos')
+        .then(r => r.json())
+        .then(data => {
+            if (data.count > ultimoConteo) {
+                // ¡NUEVO PEDIDO!
+                document.getElementById('sonido-pedido').play();
+                location.reload();
+            }
+            ultimoConteo = data.count;
+        });
+}
+
+// Verificar cada 5 segundos
+setInterval(verificarNuevosPedidos, 5000);
+</script>
+
+{% endblock %}

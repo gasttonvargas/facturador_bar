@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+.wrap {
+    max-width: 600px;
+    margin: 40px auto;
+    background: white;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+}
+
+h2 {
+    margin-bottom: 25px;
+    color: #1e1e1e;
+}
+
+form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+label {
+    font-weight: 600;
+    color: #555;
+    font-size: 14px;
+    margin-bottom: 5px;
+}
+
+input, select {
+    padding: 12px;
+    font-size: 16px;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    transition: 0.2s;
+}
+
+input:focus, select:focus {
+    outline: none;
+    border-color: #007bff;
+}
+
+button {
+    padding: 15px;
+    background: #28a745;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    margin-top: 10px;
+    transition: 0.2s;
+}
+
+button:hover {
+    background: #218838;
+    transform: translateY(-2px);
+}
+
+a {
+    display: block;
+    text-align: center;
+    margin-top: 15px;
+    color: #007bff;
+    text-decoration: none;
+}
+
+.tipo-info {
+    background: #f8f8f8;
+    padding: 12px;
+    border-radius: 6px;
+    font-size: 13px;
+    color: #666;
+}
+</style>
+
+<div class="wrap">
+
+<h2>✏️ Editar Producto</h2>
+
+<form method="post">
+    <div>
+        <label>Nombre:</label>
+        <input name="nombre" value="{{ producto.nombre }}" required>
+    </div>
+    
+    <div>
+        <label>Precio:</label>
+        <input name="precio" type="number" value="{{ producto.precio }}" required>
+    </div>
+    
+    <div>
+        <label>Categoría:</label>
+        <input name="categoria" value="{{ producto.categoria }}" required>
+    </div>
+    
+    <div>
+        <label>Tipo de producto:</label>
+        <select name="tipo" required>
+            <option value="normal" {% if (producto.tipo or 'normal') == 'normal' %}selected{% endif %}>Normal</option>
+            <option value="sanguche" {% if producto.tipo == 'sanguche' %}selected{% endif %}>Sanguche</option>
+            <option value="especial" {% if producto.tipo == 'especial' %}selected{% endif %}>Especial</option>
+        </select>
+        
+        <div class="tipo-info" style="margin-top: 8px;">
+            <strong>Normal:</strong> Producto estándar<br>
+            <strong>Sanguche:</strong> Con opciones de extras<br>
+            <strong>Especial:</strong> Con opciones completas de ingredientes
+        </div>
+    </div>
+
+    <button type="submit">💾 Guardar cambios</button>
+</form>
+
+<a href="/productos">⬅️ Volver a productos</a>
+
+</div>
+
+{% endblock %}

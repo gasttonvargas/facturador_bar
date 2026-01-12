@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+.box {
+    background: white;
+    padding: 15px;
+    border-radius: 10px;
+}
+.total {
+    font-size: 22px;
+    font-weight: bold;
+}
+</style>
+
+<h2>📊 Turnos</h2>
+
+<div class="box total">
+    Total del mes: ${{ mensual }}
+</div>
+
+<br>
+
+<div class="box">
+<table width="100%">
+<tr>
+    <th>Fecha</th>
+    <th>Total</th>
+</tr>
+
+{% for t in turnos %}
+<tr>
+    <td>{{ t.fecha }}</td>
+    <td>${{ t.total }}</td>
+</tr>
+{% endfor %}
+</table>
+</div>
+
+{% endblock %}

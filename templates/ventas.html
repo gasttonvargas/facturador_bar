@@ -1,0 +1,918 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+*{box-sizing:border-box;font-family:Arial,sans-serif}
+body{margin:0;background:#ececec}
+.pos{display:grid;grid-template-columns:38% 62%;height:100vh}
+
+/* ===== PANEL IZQUIERDO ===== */
+.izq{
+    background: linear-gradient(135deg, #1e1e1e 0%, #2d2d2d 100%);
+    color:white;
+    padding:15px;
+    display:flex;
+    flex-direction:column;
+    overflow-y:auto;
+}
+
+.izq h2{margin:0 0 10px;font-size:20px;display:flex;align-items:center;gap:8px;}
+.turno-badge{background:#28a745;padding:4px 10px;border-radius:12px;font-size:12px;}
+
+.nav{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;}
+.nav a{
+    color:white;
+    text-decoration:none;
+    font-size:12px;
+    padding:8px 12px;
+    background:#333;
+    border-radius:6px;
+    transition:0.2s;
+}
+.nav a:hover{background:#444;}
+
+/* ===== OPCIONES DE VENTA ===== */
+.venta-opciones{
+    background:#2b2b2b;
+    padding:15px;
+    border-radius:10px;
+    margin-bottom:12px;
+    border-left:4px solid #28a745;
+}
+
+.venta-opciones h4{
+    margin:0 0 10px;
+    font-size:14px;
+    color:#28a745;
+    font-weight:700;
+}
+
+.form-group{margin-bottom:10px;}
+
+.form-group label{
+    display:block;
+    font-size:12px;
+    margin-bottom:4px;
+    color:#ccc;
+    font-weight:600;
+}
+
+.venta-opciones select, 
+.venta-opciones input[type=text],
+.venta-opciones input[type=number]{
+    width:100%;
+    padding:10px;
+    font-size:14px;
+    border-radius:6px;
+    border:none;
+    background:#444;
+    color:white;
+}
+
+.venta-opciones select:focus,
+.venta-opciones input:focus{
+    outline:2px solid #28a745;
+}
+
+.direccion-grupo{
+    display:none;
+    padding:10px;
+    background:#3a3a3a;
+    border-radius:6px;
+    margin-top:8px;
+}
+.direccion-grupo.show{display:block;}
+
+/* ===== CALCULADORA DE PAGO ===== */
+.pago-calculadora{
+    background:#2b2b2b;
+    padding:12px;
+    border-radius:10px;
+    margin-bottom:12px;
+    border-left:4px solid #ffc107;
+}
+
+.pago-calculadora h4{
+    margin:0 0 10px;
+    font-size:14px;
+    color:#ffc107;
+    font-weight:700;
+}
+
+.pago-input{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    margin-bottom:8px;
+}
+
+.pago-input span{
+    font-size:18px;
+    font-weight:bold;
+}
+
+.pago-input input{
+    flex:1;
+    padding:12px;
+    font-size:18px;
+    border-radius:6px;
+    border:2px solid #ffc107;
+    background:#444;
+    color:white;
+    font-weight:bold;
+    text-align:right;
+}
+
+.vuelto-display{
+    background:#444;
+    padding:12px;
+    border-radius:6px;
+    text-align:center;
+    margin-top:8px;
+}
+
+.vuelto-display.positivo{
+    background:#28a745;
+    animation:pulse 0.5s;
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}
+
+.vuelto-label{
+    font-size:12px;
+    color:#ccc;
+    margin-bottom:4px;
+}
+
+.vuelto-valor{
+    font-size:24px;
+    font-weight:bold;
+}
+
+/* ===== PEDIDO ACTUAL ===== */
+#atajo{
+    width:100%;
+    padding:10px;
+    font-size:14px;
+    margin-bottom:10px;
+    border-radius:6px;
+    border:none;
+    background:#444;
+    color:white;
+}
+
+.pedido{
+    flex:1;
+    overflow-y:auto;
+    background:#2b2b2b;
+    padding:12px;
+    border-radius:8px;
+    max-height:22vh;
+    min-height:150px;
+}
+
+.pedido:empty::before{
+    content:"Carrito vacío...";
+    color:#666;
+    font-style:italic;
+}
+
+.item{
+    display:flex;
+    justify-content:space-between;
+    border-bottom:1px solid #444;
+    padding:8px 0;
+    font-size:13px;
+}
+
+.item-detalles{
+    font-size:11px;
+    color:#aaa;
+    margin-top:3px;
+    line-height:1.4;
+}
+
+.total{
+    font-size:28px;
+    font-weight:bold;
+    margin:10px 0;
+    text-align:right;
+    color:#28a745;
+}
+
+button.main{
+    width:100%;
+    padding:16px;
+    font-size:18px;
+    border:none;
+    border-radius:8px;
+    background:#28a745;
+    color:white;
+    cursor:pointer;
+    margin-bottom:8px;
+    font-weight:700;
+    transition:0.2s;
+}
+
+button.main:hover{background:#218838;transform:translateY(-2px);}
+button.main:active{transform:translateY(0);}
+
+.btn-comanda{
+    width:100%;
+    padding:12px;
+    background:#007bff;
+    color:white;
+    border:none;
+    border-radius:8px;
+    cursor:pointer;
+    margin-bottom:8px;
+    font-weight:600;
+}
+
+a.cerrar{
+    display:block;
+    padding:12px;
+    text-align:center;
+    background:#c9302c;
+    color:white;
+    border-radius:8px;
+    text-decoration:none;
+    font-size:14px;
+    font-weight:600;
+}
+
+/* ===== VENTAS DEL TURNO ===== */
+.ventas-turno{margin-top:12px;}
+.ventas-turno h3{font-size:13px;margin-bottom:8px;color:#ccc;}
+.ventas-lista{
+    background:#2b2b2b;
+    padding:8px;
+    border-radius:6px;
+    max-height:18vh;
+    overflow-y:auto;
+}
+
+/* ===== PANEL DERECHO - PRODUCTOS ===== */
+.der{padding:15px;overflow-y:auto;background:#f5f5f5;}
+
+.categoria{margin-bottom:25px;}
+.categoria h3{
+    background:linear-gradient(135deg, #111 0%, #333 100%);
+    color:white;
+    padding:12px;
+    border-radius:8px;
+    margin-bottom:12px;
+    font-size:16px;
+}
+
+.productos{
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(170px,1fr));
+    gap:12px;
+}
+
+.producto{
+    background:white;
+    border-radius:12px;
+    padding:12px;
+    box-shadow:0 2px 8px rgba(0,0,0,.12);
+    transition:0.2s;
+    border:2px solid transparent;
+}
+
+.producto:hover{
+    transform:translateY(-2px);
+    box-shadow:0 4px 16px rgba(0,0,0,.2);
+    border-color:#28a745;
+}
+
+.producto strong{
+    display:block;
+    margin-bottom:6px;
+    font-size:14px;
+    color:#1e1e1e;
+}
+
+.precio{
+    color:#28a745;
+    font-size:16px;
+    font-weight:bold;
+    margin-bottom:10px;
+}
+
+.ctrl{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:8px;
+}
+
+.ctrl button{
+    width:38px;
+    height:38px;
+    font-size:20px;
+    border-radius:8px;
+    border:none;
+    background:#28a745;
+    color:white;
+    cursor:pointer;
+    font-weight:bold;
+    transition:0.2s;
+}
+
+.ctrl button:hover{background:#218838;}
+.ctrl button:active{transform:scale(0.95);}
+
+.ctrl input{
+    width:50px;
+    text-align:center;
+    font-size:18px;
+    font-weight:bold;
+    border:2px solid #ddd;
+    border-radius:6px;
+    padding:4px;
+}
+
+/* ===== EXTRAS Y OBSERVACIONES ===== */
+.producto-extras{
+    margin-top:10px;
+    padding:10px;
+    background:#f8f8f8;
+    border-radius:8px;
+    border:2px solid #e0e0e0;
+    display:none;
+    font-size:12px;
+}
+
+.producto-extras.show{
+    display:block;
+    border-color:#28a745;
+}
+
+.producto-extras strong{
+    font-size:11px;
+    display:block;
+    margin-bottom:6px;
+    color:#666;
+}
+
+.extras-checks{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:6px;
+    margin-bottom:8px;
+}
+
+.extras-checks label{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    font-size:11px;
+    cursor:pointer;
+    padding:4px;
+    border-radius:4px;
+    transition:0.2s;
+}
+
+.extras-checks label:hover{background:#e8f5e9;}
+
+.extras-checks input[type=checkbox]{
+    width:16px;
+    height:16px;
+    cursor:pointer;
+}
+
+.producto-extras textarea{
+    width:100%;
+    padding:8px;
+    border:1px solid #ddd;
+    border-radius:6px;
+    font-size:11px;
+    resize:none;
+    font-family:inherit;
+    margin-top:4px;
+}
+
+/* ===== POP-UP PEDIDOS ===== */
+.popup {
+    position:fixed;
+    top:50%;
+    left:50%;
+    transform:translate(-50%, -50%);
+    background:white;
+    padding:25px;
+    border-radius:12px;
+    box-shadow:0 8px 32px rgba(0,0,0,0.3);
+    z-index:99999;
+    max-width:450px;
+    width:90%;
+    display:none;
+}
+
+.popup h4{
+    margin:0 0 15px;
+    font-size:20px;
+    color:#1e1e1e;
+}
+
+.popup .detalle{
+    margin-bottom:15px;
+    font-size:14px;
+    line-height:1.6;
+    max-height:350px;
+    overflow-y:auto;
+    padding:10px;
+    background:#f8f8f8;
+    border-radius:6px;
+}
+
+.popup-buttons{display:flex;gap:10px;}
+
+.popup button{
+    flex:1;
+    padding:14px;
+    background:#28a745;
+    color:white;
+    border:none;
+    border-radius:8px;
+    cursor:pointer;
+    font-weight:700;
+    font-size:16px;
+}
+
+.popup button.cancel{background:#c9302c;}
+</style>
+
+<div class="pos">
+
+<!-- ===== PANEL IZQUIERDO ===== -->
+<div class="izq">
+    <h2>
+        <span>🟢</span>
+        <span>Turno {{ turno.fecha }}</span>
+        <span class="turno-badge">#{{ turno.id }}</span>
+    </h2>
+
+    <!-- OPCIONES DE VENTA -->
+    <div class="venta-opciones">
+        <h4>📋 Datos del pedido</h4>
+        
+        <div class="form-group">
+            <label>Tipo de pedido:</label>
+            <select name="tipo_pedido" form="formVenta" id="tipoPedido" required>
+                <option value="mesa">🍽️ Mesa</option>
+                <option value="delivery">🏍️ Delivery</option>
+                <option value="retiro">🏪 Retiro del local</option>
+            </select>
+        </div>
+
+        <div class="direccion-grupo" id="direccionGrupo">
+            <label>📍 Dirección de entrega:</label>
+            <input type="text" name="direccion_entrega" form="formVenta" placeholder="Calle 123, Ciudad">
+        </div>
+
+        <div class="form-group">
+            <label>Medio de pago:</label>
+            <select name="medio_pago" form="formVenta" required>
+                <option value="">Seleccionar...</option>
+                <option value="Efectivo">💵 Efectivo</option>
+                <option value="Transferencia">🏦 Transferencia</option>
+                <option value="Débito">💳 Débito</option>
+                <option value="Crédito">💳 Crédito</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>Estado de pago:</label>
+            <select name="estado_pago" form="formVenta" id="estadoPago" required>
+                <option value="pagado">✅ Pagado</option>
+                <option value="pendiente">⏳ Pendiente (cobrar al entregar)</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- CALCULADORA DE PAGO -->
+    <div class="pago-calculadora">
+        <h4>💰 Calculadora de vuelto</h4>
+        
+        <div class="pago-input">
+            <span>$</span>
+            <input type="number" id="pagoRecibido" name="pago_recibido" form="formVenta" 
+                   placeholder="¿Con cuánto paga?" min="0" step="100">
+        </div>
+        
+        <div class="vuelto-display" id="vueltoDisplay">
+            <div class="vuelto-label">Vuelto a entregar:</div>
+            <div class="vuelto-valor" id="vueltoValor">$0</div>
+        </div>
+    </div>
+
+    <input id="atajo" type="text" placeholder="🔍 Atajo rápido (me, mn, pe...)" autofocus>
+
+    <div class="pedido" id="pedido"></div>
+    <div class="total" id="total">$0</div>
+
+    <form method="post" id="formVenta">
+        <button class="main">💰 Registrar venta</button>
+    </form>
+
+    <button onclick="imprimirComanda()" class="btn-comanda">🖨️ Ver comanda</button>
+
+    <a href="{{ url_for('cerrar_turno') }}" class="cerrar" 
+       onclick="return confirm('¿Cerrar turno?')">🔒 Cerrar turno</a>
+
+    <div class="ventas-turno">
+        <h3>Ventas del turno</h3>
+        <div class="ventas-lista">
+            {% for v in ventas %}
+            <div class="item">
+    <span>#{{ v.id }} — ${{ v.total }} [{{ v.tipo_pedido }}]</span>
+    <div>
+        <a href="{{ url_for('imprimir_comanda', venta_id=v.id) }}" 
+           style="color:#17a2b8;margin-right:6px;" target="_blank">🖨️</a>
+
+        <a href="{{ url_for('editar_venta', id=v.id) }}" 
+           style="color:#ffc107;margin-right:6px;">✏</a>
+
+        <a href="{{ url_for('eliminar_venta', id=v.id) }}"
+           onclick="return confirm('⚠️ ¿Eliminar esta venta? Esta acción no se puede deshacer');"
+           style="color:#dc3545;">🗑️</a>
+    </div>
+</div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- ===== PANEL DERECHO - PRODUCTOS ===== -->
+<div class="der">
+{% for categoria, prods in categorias.items() %}
+<div class="categoria">
+    <h3>{{ categoria }}</h3>
+    <div class="productos">
+    {% for p in prods %}
+    <div class="producto" data-id="{{ p.id }}" data-nombre="{{ p.nombre }}" 
+         data-precio="{{ p.precio }}" data-tipo="{{ p.tipo or 'normal' }}">
+        <strong>{{ p.nombre }}</strong>
+        <div class="precio">${{ p.precio }}</div>
+        <div class="ctrl">
+            <button type="button" onclick="cambiar({{ p.id }},-1)">−</button>
+            <input type="number" min="0" value="0" id="prod_{{ p.id }}" 
+                   name="prod_{{ p.id }}" form="formVenta">
+            <button type="button" onclick="cambiar({{ p.id }},1)">+</button>
+        </div>
+        
+        <!-- EXTRAS PARA SANGUCHES -->
+        {% if 'Milanesa' in p.nombre or 'Lomito' in p.nombre or 'Hamburguesa' in p.nombre %}
+        <div class="producto-extras" id="extras_{{ p.id }}">
+            <strong>¿Qué lleva?</strong>
+            <div class="extras-checks">
+                <label><input type="checkbox" value="lechuga"> Lechuga</label>
+                <label><input type="checkbox" value="tomate"> Tomate</label>
+                <label><input type="checkbox" value="mayonesa"> Mayonesa</label>
+                <label><input type="checkbox" value="savora"> Savora</label>
+                <label><input type="checkbox" value="ketchup"> Ketchup</label>
+                <label><input type="checkbox" value="ají"> Ají</label>
+            </div>
+            <textarea placeholder="Observaciones..." rows="2" class="obs-field"></textarea>
+        </div>
+        {% endif %}
+
+        <!-- EXTRAS PARA ESPECIALES -->
+        {% if 'Especial' in p.nombre %}
+        <div class="producto-extras" id="extras_{{ p.id }}">
+            <strong>Ingredientes Especial:</strong>
+            <div class="extras-checks">
+                <label><input type="checkbox" value="jamón"> Jamón</label>
+                <label><input type="checkbox" value="queso"> Queso</label>
+                <label><input type="checkbox" value="huevo"> Huevo</label>
+                <label><input type="checkbox" value="papas"> Papas</label>
+                <label><input type="checkbox" value="lechuga"> Lechuga</label>
+                <label><input type="checkbox" value="tomate"> Tomate</label>
+                <label><input type="checkbox" value="mayonesa"> Mayonesa</label>
+                <label><input type="checkbox" value="savora"> Savora</label>
+                <label><input type="checkbox" value="ketchup"> Ketchup</label>
+                <label><input type="checkbox" value="ají"> Ají</label>
+            </div>
+            <textarea placeholder="Observaciones..." rows="2" class="obs-field"></textarea>
+        </div>
+        {% endif %}
+    </div>
+    {% endfor %}
+    </div>
+</div>
+{% endfor %}
+</div>
+</div>
+
+<!-- POP-UP PEDIDOS -->
+<div class="popup" id="popupPedido">
+    <h4>📦 Nuevo pedido de mesa</h4>
+    <div class="detalle" id="detallePedido"></div>
+    <div class="popup-buttons">
+        <button onclick="confirmarPedido()">Aceptar</button>
+        <button class="cancel" onclick="cerrarPopup()">Cancelar</button>
+    </div>
+</div>
+
+<audio id="notifSound" src="{{ url_for('static', filename='sonido.mp3') }}" preload="auto"></audio>
+
+
+<script>
+let pedido = {}, total = 0;
+
+// Mostrar/ocultar dirección según tipo de pedido
+document.getElementById('tipoPedido').addEventListener('change', (e) => {
+    let direccionGrupo = document.getElementById('direccionGrupo');
+    if(e.target.value === 'delivery') {
+        direccionGrupo.classList.add('show');
+    } else {
+        direccionGrupo.classList.remove('show');
+    }
+});
+
+// CALCULADORA DE VUELTO
+let pagoInput = document.getElementById('pagoRecibido');
+let vueltoDisplay = document.getElementById('vueltoDisplay');
+let vueltoValor = document.getElementById('vueltoValor');
+
+pagoInput.addEventListener('input', calcularVuelto);
+
+function calcularVuelto() {
+    let pago = parseInt(pagoInput.value) || 0;
+    let vuelto = Math.max(0, pago - total);
+    
+    vueltoValor.textContent = '$' + vuelto;
+    
+    if(vuelto > 0) {
+        vueltoDisplay.classList.add('positivo');
+        setTimeout(() => vueltoDisplay.classList.remove('positivo'), 500);
+    }
+}
+
+// CARRITO
+function cambiar(id,d){
+    let i=document.getElementById("prod_"+id);
+    let v=parseInt(i.value)||0; 
+    v+=d; 
+    if(v<0)v=0; 
+    i.value=v;
+    
+    // Mostrar/ocultar extras
+    let extrasDiv = document.getElementById("extras_"+id);
+    if(extrasDiv) {
+        if(v > 0) {
+            extrasDiv.classList.add('show');
+        } else {
+            extrasDiv.classList.remove('show');
+        }
+    }
+    
+    // Actualizar pedido
+    let productoDiv = i.closest('.producto');
+    if(v===0) {
+        delete pedido[id];
+    } else {
+        pedido[id]={
+            nombre: productoDiv.dataset.nombre,
+            precio: parseInt(productoDiv.dataset.precio),
+            cant: v,
+            extras: '',
+            obs: ''
+        };
+    }
+    render();
+}
+
+function render(){
+    let box=document.getElementById("pedido");
+    box.innerHTML="";
+    total=0;
+    
+    Object.entries(pedido).forEach(([id, p])=>{
+        // Obtener extras y observaciones
+        let extrasDiv = document.getElementById("extras_"+id);
+        if(extrasDiv) {
+            let extras = [];
+            extrasDiv.querySelectorAll('input[type=checkbox]:checked').forEach(cb => {
+                extras.push(cb.value);
+            });
+            p.extras = extras.join(', ');
+            
+            let obsField = extrasDiv.querySelector('.obs-field');
+            p.obs = obsField ? obsField.value.trim() : '';
+        }
+        
+        total+=p.precio*p.cant;
+        
+        let detalles = '';
+        if(p.extras) detalles += `<div class="item-detalles">✓ Con: ${p.extras}</div>`;
+        if(p.obs) detalles += `<div class="item-detalles">⚠️ ${p.obs}</div>`;
+        
+        box.innerHTML+=`
+            <div class="item">
+                <div>
+                    <span>${p.cant} × ${p.nombre}</span>
+                    ${detalles}
+                </div>
+                <span>$${p.precio*p.cant}</span>
+            </div>
+        `;
+    });
+    
+    document.getElementById("total").innerText="$"+total;
+    calcularVuelto();
+}
+
+// Actualizar render cuando cambian extras
+document.querySelectorAll('.producto-extras').forEach(div => {
+    div.querySelectorAll('input, textarea').forEach(el => {
+        el.addEventListener('change', render);
+        el.addEventListener('input', render);
+    });
+});
+
+// ATAJOS
+const atajos={me:1, mc:2, mn:3, pe:10, coc:20};
+document.getElementById("atajo").addEventListener("keydown",e=>{
+    if(e.key==="Enter"){
+        e.preventDefault();
+        let id=atajos[e.target.value.toLowerCase()];
+        if(id)cambiar(id,1);
+        e.target.value="";
+    }
+});
+
+// ENVIAR FORMULARIO
+document.getElementById('formVenta').addEventListener('submit', (e) => {
+    if(total === 0) {
+        e.preventDefault();
+        alert('Agregue productos al pedido');
+        return;
+    }
+    
+    // Agregar extras y observaciones
+    Object.entries(pedido).forEach(([id, p]) => {
+        if(p.extras) {
+            let input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = `extras_${id}`;
+            input.value = p.extras;
+            e.target.appendChild(input);
+        }
+        if(p.obs) {
+            let input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = `obs_${id}`;
+            input.value = p.obs;
+            e.target.appendChild(input);
+        }
+    });
+});
+
+// POP-UP PEDIDOS
+let ultimoPedidoId = null;
+let pedidosPendientes = [];
+let audio = document.getElementById('notifSound');
+let soundUnlocked = false;
+
+document.addEventListener('click', () => {
+    if (!soundUnlocked) {
+        audio.volume = 1.0;
+        audio.play()
+            .then(() => {
+                audio.pause();
+                audio.currentTime = 0;
+                soundUnlocked = true;
+                console.log("🔊 Sonido habilitado");
+            })
+            .catch(err => console.log("Audio bloqueado:", err));
+    }
+}, { once: true });
+
+
+function checkPedidos(){
+    fetch("/api/pedidos/nuevos/detalle")
+        .then(r => r.json())
+        .then(data => {
+            if (!data.pedidos || data.pedidos.length === 0) return;
+
+            // Tomamos el último pedido
+            let ultimo = data.pedidos[data.pedidos.length - 1];
+
+            if (ultimoPedidoId !== ultimo.id) {
+                ultimoPedidoId = ultimo.id;
+
+                pedidosPendientes = [ultimo];
+
+                showPopupPedido();
+                playSound();
+            }
+        })
+        .catch(err => console.log("Error chequeando pedidos:", err));
+}
+
+
+function showPopupPedido(){
+    let detalle = "";
+    pedidosPendientes.forEach(p=>{
+        detalle += `<strong>Mesa ${p.mesa} — $${p.total}</strong><br>`;
+        p.detalle.forEach(d=>{
+            detalle += `  ${d.cantidad} × ${d.producto} ($${d.precio*d.cantidad})<br>`;
+            if(d.extras) detalle += `  <em>✓ Con: ${d.extras}</em><br>`;
+            if(d.observaciones) detalle += `  <em>⚠️ ${d.observaciones}</em><br>`;
+        });
+        detalle += "<br>";
+    });
+    document.getElementById("detallePedido").innerHTML = detalle;
+    document.getElementById("popupPedido").style.display = "block";
+}
+
+function cerrarPopup(){
+    document.getElementById("popupPedido").style.display = "none";
+}
+
+function confirmarPedido(){
+    pedidosPendientes.forEach(p=>{
+        fetch(`/pedidos/confirmar/${p.id}`).then(()=>{});
+    });
+    cerrarPopup();
+    pedidosPrevio = 0;
+    pedidosPendientes = [];
+    setTimeout(() => location.reload(), 1000);
+}
+
+function playSound(){
+    if(!soundUnlocked) return;
+    audio.play().catch(err=>console.log("No se pudo reproducir sonido:", err));
+}
+
+function imprimirComanda() {
+    if(total === 0) {
+        alert('No hay productos en el pedido');
+        return;
+    }
+    
+    let pago = parseInt(pagoInput.value) || 0;
+    let vuelto = Math.max(0, pago - total);
+    
+    let comandaHTML = `
+    <html>
+    <head>
+        <title>Comanda</title>
+        <style>
+            body{font-family:monospace;padding:10px;width:80mm;}
+            h2{text-align:center;border-bottom:2px solid #000;padding-bottom:5px;}
+            .item{margin:10px 0;padding:8px;border-bottom:1px dashed #ccc;}
+            .total{font-size:20px;font-weight:bold;margin-top:15px;text-align:right;}
+            .vuelto{background:#ffeb3b;padding:8px;margin-top:10px;font-size:18px;font-weight:bold;}
+        </style>
+    </head>
+    <body>
+        <h2>🍔 LA VESPUCIO - COMANDA</h2>
+        <p><strong>Fecha:</strong> ${new Date().toLocaleString()}</p>
+        <hr>
+    `;
+    
+    Object.values(pedido).forEach(p => {
+        comandaHTML += `
+        <div class="item">
+            <strong>${p.cant} × ${p.nombre}</strong> - $${p.precio * p.cant}
+            ${p.extras ? `<br><em>✓ Con: ${p.extras}</em>` : ''}
+            ${p.obs ? `<br><em>⚠️ ${p.obs}</em>` : ''}
+        </div>
+        `;
+    });
+    
+    comandaHTML += `
+        <div class="total">TOTAL: $${total}</div>
+        <div><strong>Pago recibido:</strong> $${pago}</div>
+        <div class="vuelto">Vuelto: $${vuelto}</div>
+    `;
+
+
+    // Si es delivery, mostrar dirección
+    let tipoPedido = document.getElementById('tipoPedido').value;
+    if(tipoPedido === 'delivery') {
+        let dir = document.querySelector('input[name="direccion_entrega"]').value;
+        comandaHTML += `<div><strong>Dirección:</strong> ${dir || 'No indicada'}</div>`;
+    }
+
+    comandaHTML += `
+    </body>
+    </html>
+    `;
+
+    let w = window.open('', '_blank', 'width=400,height=600');
+    w.document.write(comandaHTML);
+    w.document.close();
+    w.focus();
+    w.print();
+}
+setInterval(checkPedidos, 3000);
+
+</script>
+{% endblock %}

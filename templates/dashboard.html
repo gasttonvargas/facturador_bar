@@ -1,0 +1,239 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - LaVespucio{% endblock %}
+
+{% block content %}
+<style>
+.dashboard {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+h2 {
+    color: #1e1e1e;
+    margin-bottom: 30px;
+    font-size: 32px;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 25px;
+    margin-bottom: 40px;
+}
+
+.stat-card {
+    background: white;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+    position: relative;
+}
+
+.stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background: linear-gradient(90deg, #28a745, #20c997);
+}
+
+.stat-card h3 {
+    font-size: 14px;
+    color: #666;
+    font-weight: 500;
+    text-transform: uppercase;
+    margin-bottom: 15px;
+}
+
+.stat-card .value {
+    font-size: 42px;
+    font-weight: 700;
+    color: #1e1e1e;
+    margin-bottom: 10px;
+}
+
+.stat-card .label {
+    font-size: 13px;
+    color: #999;
+}
+
+.card {
+    background: white;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+    margin-bottom: 25px;
+}
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+    padding-bottom: 15px;
+    border-bottom: 2px solid #f0f0f0;
+}
+
+.card-title {
+    font-size: 22px;
+    font-weight: 700;
+    color: #1e1e1e;
+}
+
+.btn {
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 600;
+    text-decoration: none;
+    display: inline-block;
+    transition: all 0.3s;
+}
+
+.btn-primary { background: #007bff; color: white; }
+.btn-success { background: #28a745; color: white; }
+.btn-warning { background: #ffc107; color: #000; }
+.btn-danger { background: #dc3545; color: white; }
+
+.actions-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 15px;
+}
+
+.btn-lg {
+    padding: 20px;
+    font-size: 16px;
+    font-weight: 700;
+    text-align: center;
+}
+
+.turno-info {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+}
+
+.turno-item {
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 8px;
+}
+
+.turno-item p:first-child {
+    color: #666;
+    font-size: 13px;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+}
+
+.turno-item p:last-child {
+    font-size: 20px;
+    font-weight: 700;
+}
+
+.badge {
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.badge-success {
+    background: #d4edda;
+    color: #155724;
+}
+
+.no-turno {
+    text-align: center;
+    padding: 60px 20px;
+    color: #999;
+}
+</style>
+
+<div class="dashboard">
+    <h2>📈 Panel de Control</h2>
+
+    <div class="stats-grid">
+        <div class="stat-card">
+            <h3>Turno Actual</h3>
+            <div class="value">
+                {% if stats.turno %}
+                    #{{ stats.turno['id'] }}
+                {% else %}
+                    ---
+                {% endif %}
+            </div>
+            <p class="label">
+                {% if stats.turno %}
+                    Abierto desde {{ stats.turno['fecha'] }}
+                {% else %}
+                    Sin turno activo
+                {% endif %}
+            </p>
+        </div>
+
+        <div class="stat-card">
+            <h3>Ventas de Hoy</h3>
+            <div class="value">{{ stats.ventas_hoy }}</div>
+            <p class="label">Operaciones registradas</p>
+        </div>
+
+        <div class="stat-card">
+            <h3>Total del Día</h3>
+            <div class="value">${{ stats.total_hoy }}</div>
+            <p class="label">Facturación diaria</p>
+        </div>
+
+        <div class="stat-card">
+            <h3>Productos Cargados</h3>
+            <div class="value">{{ stats.productos_activos }}</div>
+            <p class="label">Productos disponibles para vender</p>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="actions-grid">
+            <a href="/" class="btn btn-primary btn-lg">🧾 Nueva Venta</a>
+            <a href="/productos" class="btn btn-success btn-lg">📦 Productos</a>
+            <a href="/turnos" class="btn btn-warning btn-lg">📊 Turnos</a>
+
+            {% if stats.turno %}
+            <a href="/cerrar_turno" class="btn btn-danger btn-lg"
+               onclick="return confirm('¿Cerrar el turno actual?')">
+                🔒 Cerrar Turno
+            </a>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if stats.turno %}
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">Estado del Turno</h3>
+            <span class="badge badge-success">ABIERTO</span>
+        </div>
+
+        <div class="turno-info">
+            <div class="turno-item">
+                <p>Número</p>
+                <p>#{{ stats.turno['id'] }}</p>
+            </div>
+            <div class="turno-item">
+                <p>Apertura</p>
+                <p>{{ stats.turno['fecha'] }}</p>
+            </div>
+            <div class="turno-item">
+                <p>Usuario</p>
+                <p>{{ stats.turno['usuario_apertura'] or 'Sistema' }}</p>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+{% endblock %}

@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="pedido-confirmado-container">
+    <h1>✅ Pedido enviado correctamente</h1>
+    <p>Mesa: <strong>{{ mesa }}</strong></p>
+    <p>Total: <strong>$ {{ total }}</strong></p>
+
+    <a href="/mesa/{{ mesa }}" class="btn-volver">Volver a la mesa</a>
+</div>
+
+<style>
+.pedido-confirmado-container {
+    max-width: 500px;
+    margin: 50px auto;
+    padding: 30px;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.1);
+    text-align: center;
+}
+
+.pedido-confirmado-container h1 {
+    color: #28a745;
+    margin-bottom: 20px;
+}
+
+.btn-volver {
+    display: inline-block;
+    padding: 10px 20px;
+    background: #ff6347;
+    color: #fff;
+    border-radius: 8px;
+    text-decoration: none;
+    margin-top: 20px;
+    transition: background 0.2s;
+}
+
+.btn-volver:hover {
+    background: #e5533d;
+}
+</style>
+
+{% endblock %}
