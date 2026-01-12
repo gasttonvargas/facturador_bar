@@ -1,12 +1,13 @@
 from flask import Flask, render_template, request, redirect, session, flash, jsonify
 import sqlite3
+import os
 from datetime import date, datetime
 from functools import wraps
 from hashlib import sha256
 from contextlib import contextmanager
 
 app = Flask(__name__)
-app.secret_key = 'lavespucio_2025_cambiar_en_produccion'
+app.secret_key = os.environ.get("SECRET_KEY", "dev_secret")
 
 # ========== SOLUCIÓN AL ERROR "database is locked" ==========
 # 1. Timeout aumentado a 30 segundos
@@ -600,4 +601,4 @@ def cerrar_turno():
 # ---------- MAIN ----------
 if __name__ == "__main__":
     init_db()
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    app.run(host="0.0.0.0")
