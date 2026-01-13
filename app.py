@@ -568,15 +568,28 @@ def api_pedidos_nuevos_detalle():
 def productos():
     with get_db() as con:
         if request.method == "POST":
+            nombre = request.form.get("nombre")
+            precio = request.form.get("precio")
+            categoria = request.form.get("categoria")
             tipo = request.form.get("tipo", "normal")
-            con.execute("INSERT INTO productos (nombre, precio, categoria, tipo) VALUES (?, ?, ?, ?)",
-                        (request.form["nombre"], request.form["precio"], request.form["categoria"], tipo))
+
+            if not nombre or not precio or not categoria:
+                flash("Todos los campos son obligatorios", "danger")
+                return redirect("/productos")
+
+            con.execute("""
+                INSERT INTO productos (nombre, precio, categoria, tipo)
+                VALUES (?, ?, ?, ?)
+            """, (nombre, int(precio), categoria, tipo))
+
             con.commit()
-            flash('Producto agregado', 'success')
+            flash("Producto agregado", "success")
             return redirect("/productos")
-        
-        productos = con.execute("SELECT * FROM productos ORDER BY categoria, nombre").fetchall()
-    
+
+        productos = con.execute(
+            "SELECT * FROM productos ORDER BY categoria, nombre"
+        ).fetchall()
+
     return render_template("productos.html", productos=productos)
 
 @app.route("/editar_producto/<int:id>", methods=["GET", "POST"])
@@ -936,7 +949,7 @@ def exportar_reporte(tipo):
     output.headers["Content-Disposition"] = f"attachment; filename={nombre}"
     output.headers["Content-type"] = "text/csv"
     return output
-    
+
 # ========== MAIN ==========
 if __name__ == "__main__":
     app.run(host="0.0.0.0")
