@@ -2,39 +2,233 @@
 {% block content %}
 
 <style>
+.wrap {
+    max-width: 1200px;
+    margin: 20px auto;
+    padding: 20px;
+}
+
+h2 {
+    margin-bottom: 25px;
+    color: #1e1e1e;
+}
+
 .box {
     background: white;
-    padding: 15px;
+    padding: 20px;
     border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    margin-bottom: 20px;
 }
+
 .total {
-    font-size: 22px;
+    font-size: 26px;
     font-weight: bold;
+    color: #28a745;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+thead {
+    background: #f8f8f8;
+}
+
+th, td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+th {
+    font-weight: 700;
+    color: #666;
+    font-size: 13px;
+    text-transform: uppercase;
+}
+
+tr:hover {
+    background: #f8f8f8;
+}
+
+.badge {
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.badge-success {
+    background: #d4edda;
+    color: #155724;
+}
+
+.badge-danger {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.btn {
+    padding: 6px 12px;
+    border: none;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+    margin-right: 5px;
+    transition: 0.2s;
+}
+
+.btn-warning {
+    background: #ffc107;
+    color: #000;
+}
+
+.btn-warning:hover {
+    background: #e0a800;
+}
+
+.btn-success {
+    background: #28a745;
+    color: white;
+}
+
+.btn-success:hover {
+    background: #218838;
+}
+
+.ventas-eliminadas {
+    margin-top: 30px;
+}
+
+.ventas-eliminadas h3 {
+    margin-bottom: 15px;
+    color: #dc3545;
+}
+
+.venta-eliminada {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px;
+    background: #f8d7da;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    border-left: 4px solid #dc3545;
+}
+
+.venta-eliminada-info {
+    flex: 1;
+}
+
+.venta-eliminada-info strong {
+    color: #721c24;
+}
+
+.nota-admin {
+    background: #d1ecf1;
+    color: #0c5460;
+    padding: 12px;
+    border-radius: 8px;
+    margin-top: 15px;
+    font-size: 13px;
 }
 </style>
 
-<h2>📊 Turnos</h2>
+<div class="wrap">
+    <h2>📊 Gestión de Turnos</h2>
 
-<div class="box total">
-    Total del mes: ${{ mensual }}
-</div>
+    <div class="box">
+        <div class="total">
+            Total del mes: ${{ mensual }}
+        </div>
+    </div>
 
-<br>
+    <div class="box">
+        <table>
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Fecha</th>
+                    <th>Estado</th>
+                    <th>Total</th>
+                    <th>Usuario</th>
+                    {% if session.rol == 'ADMIN' %}
+                    <th>Acciones</th>
+                    {% endif %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for t in turnos %}
+                <tr>
+                    <td><strong>#{{ t.id }}</strong></td>
+                    <td>{{ t.fecha }}</td>
+                    <td>
+                        {% if t.estado == 'ABIERTO' %}
+                            <span class="badge badge-success">ABIERTO</span>
+                        {% else %}
+                            <span class="badge badge-danger">CERRADO</span>
+                        {% endif %}
+                    </td>
+                    <td style="font-weight:700;color:#28a745;">${{ t.total }}</td>
+                    <td>{{ t.usuario_apertura }}</td>
+                    {% if session.rol == 'ADMIN' %}
+                    <td>
+                        {% if t.estado == 'CERRADO' %}
+                            <a href="/turnos/editar/{{ t.id }}" class="btn btn-warning">
+                                ✏️ Editar Fecha
+                            </a>
+                        {% else %}
+                            <span style="color:#999;font-size:12px;">-</span>
+                        {% endif %}
+                    </td>
+                    {% endif %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        
+        {% if session.rol == 'ADMIN' %}
+        <div class="nota-admin">
+            <strong>ℹ️ Nota para Administradores:</strong> 
+            Solo los turnos cerrados pueden ser editados. Puedes cambiar la fecha del turno si necesitas corregir errores.
+        </div>
+        {% endif %}
+    </div>
 
-<div class="box">
-<table width="100%">
-<tr>
-    <th>Fecha</th>
-    <th>Total</th>
-</tr>
-
-{% for t in turnos %}
-<tr>
-    <td>{{ t.fecha }}</td>
-    <td>${{ t.total }}</td>
-</tr>
-{% endfor %}
-</table>
+    {% if session.rol == 'ADMIN' and ventas_eliminadas %}
+    <div class="ventas-eliminadas">
+        <div class="box">
+            <h3>🗑️ Ventas Eliminadas (Disponibles para Reposición)</h3>
+            
+            {% for v in ventas_eliminadas %}
+            <div class="venta-eliminada">
+                <div class="venta-eliminada-info">
+                    <strong>Venta #{{ v.id }}</strong> - 
+                    ${{ v.total }} - 
+                    {{ v.fecha_hora[0:10] }} {{ v.fecha_hora[11:16] }} - 
+                    Usuario: {{ v.usuario }} - 
+                    Turno: {{ v.turno_fecha or 'Sin turno' }}
+                </div>
+                <div>
+                    <a href="/ventas/reponer/{{ v.id }}" class="btn btn-success">
+                        🔄 Reponer
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+            
+            <div class="nota-admin" style="margin-top:15px;">
+                <strong>ℹ️ Reposición de Ventas:</strong> 
+                Puedes reponer ventas eliminadas por error. La venta se reactivará y se contabilizará nuevamente en su turno original.
+            </div>
+        </div>
+    </div>
+    {% endif %}
 </div>
 
 {% endblock %}

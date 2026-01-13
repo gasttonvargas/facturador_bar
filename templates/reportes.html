@@ -1,0 +1,602 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+.reportes-wrap {
+    max-width: 1400px;
+    margin: 20px auto;
+    padding: 15px;
+}
+
+h1 {
+    margin-bottom: 25px;
+    color: #1e1e1e;
+    font-size: 28px;
+}
+
+.tabs {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 25px;
+    border-bottom: 2px solid #e0e0e0;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.tab {
+    padding: 12px 24px;
+    background: none;
+    border: none;
+    border-bottom: 3px solid transparent;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 600;
+    color: #666;
+    white-space: nowrap;
+    transition: 0.2s;
+}
+
+.tab:hover {
+    color: #28a745;
+}
+
+.tab.active {
+    color: #28a745;
+    border-bottom-color: #28a745;
+}
+
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+    animation: fadeIn 0.3s;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Stats Cards */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.stat-card {
+    background: white;
+    padding: 25px;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    position: relative;
+    overflow: hidden;
+}
+
+.stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background: linear-gradient(90deg, #28a745, #20c997);
+}
+
+.stat-label {
+    font-size: 13px;
+    color: #666;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    font-weight: 600;
+}
+
+.stat-value {
+    font-size: 36px;
+    font-weight: 700;
+    color: #1e1e1e;
+    margin-bottom: 8px;
+}
+
+.stat-subtitle {
+    font-size: 13px;
+    color: #999;
+}
+
+.stat-change {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    margin-top: 8px;
+}
+
+.stat-change.positive {
+    background: #d4edda;
+    color: #155724;
+}
+
+.stat-change.negative {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+/* Secciones */
+.section {
+    background: white;
+    padding: 25px;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    margin-bottom: 25px;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 2px solid #f0f0f0;
+}
+
+.section-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: #1e1e1e;
+}
+
+.btn {
+    padding: 10px 18px;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+    transition: 0.2s;
+}
+
+.btn-primary {
+    background: #007bff;
+    color: white;
+}
+
+.btn-primary:hover {
+    background: #0056b3;
+}
+
+/* Top productos */
+.top-productos {
+    display: grid;
+    gap: 12px;
+}
+
+.producto-item {
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    gap: 15px;
+    align-items: center;
+    padding: 12px;
+    background: #f8f8f8;
+    border-radius: 8px;
+    transition: 0.2s;
+}
+
+.producto-item:hover {
+    background: #e8f5e9;
+}
+
+.producto-nombre {
+    font-weight: 600;
+    color: #1e1e1e;
+}
+
+.producto-cantidad {
+    font-size: 14px;
+    color: #666;
+    text-align: center;
+}
+
+.producto-total {
+    font-weight: 700;
+    color: #28a745;
+    text-align: right;
+}
+
+/* Gráfico simple de barras */
+.chart-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.chart-label {
+    min-width: 100px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #666;
+}
+
+.chart-bar-container {
+    flex: 1;
+    height: 30px;
+    background: #f0f0f0;
+    border-radius: 6px;
+    overflow: hidden;
+    position: relative;
+}
+
+.chart-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #28a745, #20c997);
+    border-radius: 6px;
+    transition: width 0.5s ease;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding-right: 10px;
+    color: white;
+    font-weight: 600;
+    font-size: 12px;
+}
+
+/* Tabla responsive */
+.table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+table {
+    width: 100%;
+    min-width: 600px;
+    border-collapse: collapse;
+}
+
+thead {
+    background: #f8f8f8;
+}
+
+th, td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+th {
+    font-weight: 700;
+    color: #666;
+    font-size: 13px;
+    text-transform: uppercase;
+}
+
+tr:hover {
+    background: #f8f8f8;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    h1 {
+        font-size: 22px;
+    }
+
+    .tabs {
+        gap: 5px;
+    }
+
+    .tab {
+        padding: 10px 16px;
+        font-size: 14px;
+    }
+
+    .stats-grid {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+
+    .stat-value {
+        font-size: 28px;
+    }
+
+    .section {
+        padding: 15px;
+    }
+
+    .section-title {
+        font-size: 18px;
+    }
+
+    .producto-item {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+
+    .producto-cantidad,
+    .producto-total {
+        text-align: left;
+    }
+
+    .chart-label {
+        min-width: 80px;
+        font-size: 12px;
+    }
+
+    .chart-bar-fill {
+        font-size: 11px;
+        padding-right: 5px;
+    }
+
+    table {
+        font-size: 13px;
+        min-width: 100%;
+    }
+
+    th, td {
+        padding: 8px 6px;
+    }
+}
+
+@media (max-width: 480px) {
+    .reportes-wrap {
+        padding: 10px;
+    }
+
+    h1 {
+        font-size: 20px;
+    }
+
+    .tab {
+        padding: 8px 12px;
+        font-size: 13px;
+    }
+
+    .stat-card {
+        padding: 20px;
+    }
+
+    .stat-value {
+        font-size: 24px;
+    }
+
+    .section-header {
+        flex-direction: column;
+        gap: 10px;
+        align-items: flex-start;
+    }
+
+    .btn {
+        width: 100%;
+        text-align: center;
+    }
+}
+</style>
+
+<div class="reportes-wrap">
+    <h1>📈 Reportes de Ventas</h1>
+
+    <!-- Tabs -->
+    <div class="tabs">
+        <button class="tab active" onclick="showTab('semana')">📅 Esta Semana</button>
+        <button class="tab" onclick="showTab('mes')">📆 Este Mes</button>
+    </div>
+
+    <!-- ===== REPORTE SEMANAL ===== -->
+    <div id="tab-semana" class="tab-content active">
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-label">Período</div>
+                <div class="stat-value">{{ inicio_semana.strftime('%d/%m') }} - {{ fin_semana.strftime('%d/%m') }}</div>
+                <div class="stat-subtitle">Semana actual</div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-label">Total Ventas</div>
+                <div class="stat-value">{{ ventas_semana }}</div>
+                <div class="stat-subtitle">Operaciones</div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-label">Facturación</div>
+                <div class="stat-value">${{ total_semana }}</div>
+                <div class="stat-subtitle">
+                    {% if var_semana != 0 %}
+                    <span class="stat-change {{ 'positive' if var_semana > 0 else 'negative' }}">
+                        {{ '+' if var_semana > 0 else '' }}{{ "%.1f"|format(var_semana) }}% vs semana anterior
+                    </span>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-label">Promedio por Venta</div>
+                <div class="stat-value">
+                    ${{ (total_semana // ventas_semana) if ventas_semana > 0 else 0 }}
+                </div>
+                <div class="stat-subtitle">Ticket promedio</div>
+            </div>
+        </div>
+
+        <!-- Top productos semana -->
+        <div class="section">
+            <div class="section-header">
+                <h2 class="section-title">🏆 Top 10 Productos de la Semana</h2>
+                <a href="/reportes/exportar/semana" class="btn btn-primary">📥 Exportar CSV</a>
+            </div>
+
+            <div class="top-productos">
+                {% for p in top_semana %}
+                <div class="producto-item">
+                    <div class="producto-nombre">{{ p.producto }}</div>
+                    <div class="producto-cantidad">{{ p.cantidad }} unidades</div>
+                    <div class="producto-total">${{ p.total }}</div>
+                </div>
+                {% endfor %}
+
+                {% if not top_semana %}
+                <p style="text-align:center;color:#999;padding:40px;">
+                    No hay datos para esta semana
+                </p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Ventas por día -->
+        <div class="section">
+            <h2 class="section-title">📊 Ventas por Día</h2>
+            
+            {% if ventas_por_dia_semana %}
+                {% set max_venta = ventas_por_dia_semana | map(attribute='total') | max %}
+                {% for dia in ventas_por_dia_semana %}
+                <div class="chart-bar">
+                    <div class="chart-label">{{ dia.fecha }}</div>
+                    <div class="chart-bar-container">
+                        <div class="chart-bar-fill" style="width: {{ (dia.total / max_venta * 100) if max_venta > 0 else 0 }}%">
+                            ${{ dia.total }}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <p style="text-align:center;color:#999;padding:40px;">
+                    No hay datos para esta semana
+                </p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- ===== REPORTE MENSUAL ===== -->
+    <div id="tab-mes" class="tab-content">
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-label">Período</div>
+                <div class="stat-value">{{ inicio_mes.strftime('%B %Y') }}</div>
+                <div class="stat-subtitle">Mes actual</div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-label">Total Ventas</div>
+                <div class="stat-value">{{ ventas_mes }}</div>
+                <div class="stat-subtitle">Operaciones</div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-label">Facturación</div>
+                <div class="stat-value">${{ total_mes }}</div>
+                <div class="stat-subtitle">
+                    {% if var_mes != 0 %}
+                    <span class="stat-change {{ 'positive' if var_mes > 0 else 'negative' }}">
+                        {{ '+' if var_mes > 0 else '' }}{{ "%.1f"|format(var_mes) }}% vs mes anterior
+                    </span>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-label">Promedio por Venta</div>
+                <div class="stat-value">
+                    ${{ (total_mes // ventas_mes) if ventas_mes > 0 else 0 }}
+                </div>
+                <div class="stat-subtitle">Ticket promedio</div>
+            </div>
+        </div>
+
+        <!-- Top productos mes -->
+        <div class="section">
+            <div class="section-header">
+                <h2 class="section-title">🏆 Top 15 Productos del Mes</h2>
+                <a href="/reportes/exportar/mes" class="btn btn-primary">📥 Exportar CSV</a>
+            </div>
+
+            <div class="top-productos">
+                {% for p in top_mes %}
+                <div class="producto-item">
+                    <div class="producto-nombre">{{ p.producto }}</div>
+                    <div class="producto-cantidad">{{ p.cantidad }} unidades</div>
+                    <div class="producto-total">${{ p.total }}</div>
+                </div>
+                {% endfor %}
+
+                {% if not top_mes %}
+                <p style="text-align:center;color:#999;padding:40px;">
+                    No hay datos para este mes
+                </p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Ventas por tipo -->
+        <div class="section">
+            <h2 class="section-title">🍽️ Ventas por Tipo de Pedido</h2>
+            
+            {% if ventas_por_tipo %}
+                {% set total_tipo = ventas_por_tipo | map(attribute='total') | sum %}
+                {% for tipo in ventas_por_tipo %}
+                <div class="chart-bar">
+                    <div class="chart-label">
+                        {% if tipo.tipo_pedido == 'mesa' %}🍽️ Mesa
+                        {% elif tipo.tipo_pedido == 'delivery' %}🏍️ Delivery
+                        {% else %}🏪 Retiro
+                        {% endif %}
+                    </div>
+                    <div class="chart-bar-container">
+                        <div class="chart-bar-fill" style="width: {{ (tipo.total / total_tipo * 100) if total_tipo > 0 else 0 }}%">
+                            ${{ tipo.total }}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <p style="text-align:center;color:#999;padding:40px;">
+                    No hay datos
+                </p>
+            {% endif %}
+        </div>
+
+        <!-- Ventas por medio de pago -->
+        <div class="section">
+            <h2 class="section-title">💳 Ventas por Medio de Pago</h2>
+            
+            {% if ventas_por_medio %}
+                {% set total_medio = ventas_por_medio | map(attribute='total') | sum %}
+                {% for medio in ventas_por_medio %}
+                <div class="chart-bar">
+                    <div class="chart-label">{{ medio.medio_pago }}</div>
+                    <div class="chart-bar-container">
+                        <div class="chart-bar-fill" style="width: {{ (medio.total / total_medio * 100) if total_medio > 0 else 0 }}%">
+                            ${{ medio.total }}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <p style="text-align:center;color:#999;padding:40px;">
+                    No hay datos
+                </p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+function showTab(tabName) {
+    // Ocultar todos los tabs
+    document.querySelectorAll('.tab-content').forEach(tab => {
+        tab.classList.remove('active');
+    });
+    
+    document.querySelectorAll('.tab').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    
+    // Mostrar tab seleccionado
+    document.getElementById('tab-' + tabName).classList.add('active');
+    event.target.classList.add('active');
+}
+</script>
+
+{% endblock %}

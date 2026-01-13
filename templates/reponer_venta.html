@@ -1,0 +1,187 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+.wrap {
+    max-width: 700px;
+    margin: 40px auto;
+    background: white;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+}
+
+h2 {
+    margin-bottom: 25px;
+    color: #1e1e1e;
+}
+
+.alert-info {
+    background: #d1ecf1;
+    color: #0c5460;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    border-left: 4px solid #17a2b8;
+}
+
+.venta-info {
+    background: #f8f8f8;
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 25px;
+}
+
+.info-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.info-row:last-child {
+    border-bottom: none;
+}
+
+.detalle-productos {
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 2px solid #e0e0e0;
+}
+
+.detalle-productos h4 {
+    margin-bottom: 10px;
+    color: #666;
+    font-size: 14px;
+}
+
+.producto-item {
+    padding: 8px;
+    background: white;
+    border-radius: 6px;
+    margin-bottom: 6px;
+    display: flex;
+    justify-content: space-between;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: #555;
+}
+
+.form-group textarea {
+    width: 100%;
+    padding: 12px;
+    font-size: 14px;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    font-family: inherit;
+    resize: vertical;
+    min-height: 80px;
+}
+
+.form-group textarea:focus {
+    outline: none;
+    border-color: #28a745;
+}
+
+.btn {
+    padding: 15px 30px;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+    transition: 0.2s;
+}
+
+.btn-success {
+    background: #28a745;
+    color: white;
+}
+
+.btn-success:hover {
+    background: #218838;
+    transform: translateY(-2px);
+}
+
+.btn-secondary {
+    background: #6c757d;
+    color: white;
+    margin-left: 10px;
+}
+</style>
+
+<div class="wrap">
+    <h2>🔄 Reponer Venta #{{ venta.id }}</h2>
+    
+    <div class="alert-info">
+        <strong>ℹ️ Información:</strong> Estás a punto de reponer una venta eliminada. 
+        Esta acción reactivará la venta y la contabilizará nuevamente en el turno correspondiente.
+    </div>
+    
+    <div class="venta-info">
+        <div class="info-row">
+            <strong>ID:</strong>
+            <span>#{{ venta.id }}</span>
+        </div>
+        <div class="info-row">
+            <strong>Fecha/Hora:</strong>
+            <span>{{ venta.fecha_hora[0:10] }} {{ venta.fecha_hora[11:16] }}</span>
+        </div>
+        <div class="info-row">
+            <strong>Usuario Original:</strong>
+            <span>{{ venta.usuario }}</span>
+        </div>
+        <div class="info-row">
+            <strong>Tipo de Pedido:</strong>
+            <span>{{ venta.tipo_pedido }}</span>
+        </div>
+        <div class="info-row">
+            <strong>Medio de Pago:</strong>
+            <span>{{ venta.medio_pago }}</span>
+        </div>
+        <div class="info-row">
+            <strong>Total:</strong>
+            <span style="font-weight:700;color:#28a745;">${{ venta.total }}</span>
+        </div>
+        
+        {% if detalle %}
+        <div class="detalle-productos">
+            <h4>📦 Productos de la Venta:</h4>
+            {% for d in detalle %}
+            <div class="producto-item">
+                <span>{{ d.cantidad }}x {{ d.producto }}</span>
+                <span>${{ d.cantidad * d.precio }}</span>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+    
+    <form method="POST">
+        <div class="form-group">
+            <label>📝 Motivo de la Reposición:</label>
+            <textarea name="motivo" placeholder="Ej: Error en la eliminación, pedido confirmado posteriormente, etc." required></textarea>
+        </div>
+        
+        <button type="submit" class="btn btn-success" 
+                onclick="return confirm('¿Confirmar reposición de la venta #{{ venta.id }}?')">
+            ✅ Confirmar Reposición
+        </button>
+        
+        <a href="/turnos" class="btn btn-secondary">
+            ❌ Cancelar
+        </a>
+    </form>
+</div>
+
+{% endblock %}
