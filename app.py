@@ -67,7 +67,6 @@ def init_db():
             tipo_pedido TEXT DEFAULT 'mesa',
             direccion_entrega TEXT,
             estado_pago TEXT DEFAULT 'pagado',
-            estado_cocina TEXT DEFAULT 'pendiente',
             estado_delivery TEXT DEFAULT 'pendiente',
             pago_recibido INTEGER DEFAULT 0,
             vuelto INTEGER DEFAULT 0,
@@ -236,16 +235,22 @@ def ventas():
             pago_recibido = request.form.get("pago_recibido")
             pago_recibido = int(pago_recibido) if pago_recibido and pago_recibido.isdigit() else 0
             
+            # Determinar estado_delivery según tipo de pedido
+            if tipo_pedido == 'delivery':
+                estado_delivery = 'listo'  # Los delivery empiezan en "listo para enviar"
+            else:
+                estado_delivery = 'no_aplica'  # Mesa y retiro no usan delivery
+            
             total = 0
             
             cur = con.cursor()
             cur.execute("""
                 INSERT INTO ventas (turno_id, medio_pago, total, estado, usuario, fecha_hora, 
-                                   tipo_pedido, direccion_entrega, estado_pago, estado_cocina, estado_delivery,
+                                   tipo_pedido, direccion_entrega, estado_pago, estado_delivery,
                                    pago_recibido, vuelto, repuesta)
-                VALUES (?, ?, 0, 'OK', ?, ?, ?, ?, ?, 'pendiente', 'pendiente', 0, 0, 0)
+                VALUES (?, ?, 0, 'OK', ?, ?, ?, ?, ?, ?, 0, 0, 0)
             """, (turno["id"], medio, session['username'], datetime.now().isoformat(), 
-                  tipo_pedido, direccion, estado_pago))
+                  tipo_pedido, direccion, estado_pago, estado_delivery))
             venta_id = cur.lastrowid
             
             for p in productos:
@@ -327,14 +332,14 @@ def eliminar_venta(id):
             flash("La venta no existe", "danger")
             return redirect("/")
 
-        # Marcar como ELIMINADA en lugar de borrar
+        # Marcar como ELIMINADA
         con.execute("UPDATE ventas SET estado='ELIMINADA' WHERE id=?", (id,))
         con.commit()
 
     flash(f"Venta #{id} eliminada correctamente", "warning")
     return redirect("/")
 
-# ========== 🆕 REPONER VENTA (SOLO ADMIN) ==========
+# ========== REPONER VENTA (SOLO ADMIN) ==========
 @app.route("/ventas/reponer/<int:id>", methods=["GET", "POST"])
 @admin_required
 def reponer_venta(id):
@@ -352,7 +357,6 @@ def reponer_venta(id):
         if request.method == "POST":
             motivo = request.form.get("motivo", "Sin motivo especificado")
             
-            # Reactivar la venta
             con.execute("""
                 UPDATE ventas 
                 SET estado='OK', 
@@ -367,7 +371,6 @@ def reponer_venta(id):
             flash(f"✅ Venta #{id} repuesta correctamente", "success")
             return redirect("/turnos")
     
-    # GET: Mostrar formulario
     detalle = con.execute("SELECT * FROM detalle_venta WHERE venta_id=?", (id,)).fetchall()
     return render_template("reponer_venta.html", venta=venta, detalle=detalle)
 
@@ -453,8 +456,8 @@ def confirmar_pedido(id):
             cur = con.cursor()
             cur.execute("""
                 INSERT INTO ventas (turno_id, medio_pago, total, estado, usuario, fecha_hora,
-                                   tipo_pedido, estado_cocina, estado_delivery, pago_recibido, vuelto, repuesta)
-                VALUES (?, 'Mesa', ?, 'OK', ?, ?, 'mesa', 'pendiente', 'no_aplica', 0, 0, 0)
+                                   tipo_pedido, estado_delivery, pago_recibido, vuelto, repuesta)
+                VALUES (?, 'Mesa', ?, 'OK', ?, ?, 'mesa', 'no_aplica', 0, 0, 0)
             """, (turno["id"], pedido["total"], session['username'], datetime.now().isoformat()))
             venta_id = cur.lastrowid
             
@@ -481,58 +484,85 @@ def cancelar_pedido(id):
     flash('Pedido cancelado', 'warning')
     return redirect("/pedidos")
 
-# ========== COCINA ==========
-@app.route("/cocina")
-@login_required
-def cocina():
-    with get_db() as con:
-        ventas_pendientes = con.execute("""
-            SELECT v.*, GROUP_CONCAT(dv.cantidad || 'x ' || dv.producto || 
-                   CASE WHEN dv.extras != '' THEN ' [' || dv.extras || ']' ELSE '' END ||
-                   CASE WHEN dv.observaciones != '' THEN ' (' || dv.observaciones || ')' ELSE '' END, ', ') as detalle
-            FROM ventas v
-            LEFT JOIN detalle_venta dv ON v.id = dv.venta_id
-            WHERE v.estado_cocina = 'pendiente'
-            GROUP BY v.id
-            ORDER BY v.id ASC
-        """).fetchall()
-    
-    return render_template("cocina.html", ventas=ventas_pendientes)
-
-@app.route("/cocina/listo/<int:venta_id>")
-@login_required
-def cocina_listo(venta_id):
-    with get_db() as con:
-        con.execute("UPDATE ventas SET estado_cocina='listo' WHERE id=?", (venta_id,))
-        con.commit()
-    
-    flash(f'Venta #{venta_id} lista para delivery', 'success')
-    return redirect("/cocina")
-
 # ========== DELIVERY ==========
 @app.route("/delivery")
 @login_required
 def delivery():
     with get_db() as con:
+        # Pedidos activos (listo o enviado)
         ventas_delivery = con.execute("""
-            SELECT v.*, GROUP_CONCAT(dv.cantidad || 'x ' || dv.producto, ', ') as detalle
-            FROM ventas v
-            LEFT JOIN detalle_venta dv ON v.id = dv.venta_id
-            WHERE v.tipo_pedido = 'delivery' AND v.estado_cocina = 'listo' AND v.estado_delivery = 'pendiente'
-            GROUP BY v.id
-            ORDER BY v.id ASC
+            SELECT *
+            FROM ventas
+            WHERE tipo_pedido = 'delivery'
+              AND estado = 'OK'
+              AND estado_delivery IN ('listo', 'enviado')
+            ORDER BY id ASC
         """).fetchall()
-    
-    return render_template("delivery.html", ventas=ventas_delivery)
 
-@app.route("/delivery/entregado/<int:venta_id>")
+        deliveries = []
+        for v in ventas_delivery:
+            detalle = con.execute("""
+                SELECT cantidad, producto, extras, observaciones
+                FROM detalle_venta
+                WHERE venta_id = ?
+            """, (v["id"],)).fetchall()
+
+            deliveries.append({
+                "id": v["id"],
+                "fecha_hora": v["fecha_hora"],
+                "direccion_entrega": v["direccion_entrega"],
+                "medio_pago": v["medio_pago"],
+                "estado_pago": v["estado_pago"],
+                "estado_delivery": v["estado_delivery"],
+                "total": v["total"],
+                "detalle": detalle
+            })
+
+        # Entregados hoy
+        entregados = con.execute("""
+            SELECT *
+            FROM ventas
+            WHERE tipo_pedido = 'delivery'
+              AND estado_delivery = 'finalizado'
+              AND DATE(fecha_hora) = DATE('now')
+            ORDER BY id DESC
+            LIMIT 10
+        """).fetchall()
+
+        # Stats
+        stats = con.execute("""
+            SELECT
+                COUNT(*) AS total_pedidos,
+                COALESCE(SUM(total), 0) AS total_facturado,
+                SUM(CASE WHEN estado_delivery = 'listo' THEN 1 ELSE 0 END) AS listos_enviar,
+                SUM(CASE WHEN estado_delivery = 'enviado' THEN 1 ELSE 0 END) AS salio,
+                SUM(CASE WHEN estado_delivery = 'finalizado' THEN 1 ELSE 0 END) AS entregados
+            FROM ventas
+            WHERE tipo_pedido = 'delivery'
+              AND estado = 'OK'
+              AND DATE(fecha_hora) = DATE('now')
+        """).fetchone()
+
+    return render_template("delivery.html", deliveries=deliveries, entregados=entregados, stats=stats)
+
+@app.route("/delivery/salio/<int:venta_id>")
 @login_required
-def delivery_entregado(venta_id):
+def delivery_salio(venta_id):
+    """Marcar venta como 'Salió' (enviado)"""
     with get_db() as con:
-        con.execute("UPDATE ventas SET estado_delivery='entregado' WHERE id=?", (venta_id,))
+        con.execute("UPDATE ventas SET estado_delivery='enviado' WHERE id=?", (venta_id,))
         con.commit()
-    
-    flash(f'Venta #{venta_id} marcada como entregada', 'success')
+    flash(f'Venta #{venta_id} marcada como Salió', 'info')
+    return redirect("/delivery")
+
+@app.route("/delivery/finalizado/<int:venta_id>")
+@login_required
+def delivery_finalizado(venta_id):
+    """Marcar venta como finalizada (entregada)"""
+    with get_db() as con:
+        con.execute("UPDATE ventas SET estado_delivery='finalizado' WHERE id=?", (venta_id,))
+        con.commit()
+    flash(f'Venta #{venta_id} marcada como Finalizada', 'success')
     return redirect("/delivery")
 
 # ========== API ==========
@@ -623,13 +653,12 @@ def eliminar_producto(id):
 
 # ========== TURNOS ==========
 @app.route("/turnos")
-@caja_or_admin_required  # 🆕 Ahora CAJA también puede ver turnos
+@caja_or_admin_required
 def turnos():
     with get_db() as con:
         turnos = con.execute("SELECT * FROM turnos ORDER BY id DESC LIMIT 30").fetchall()
         mensual = con.execute("SELECT IFNULL(SUM(total),0) total FROM turnos WHERE estado='CERRADO'").fetchone()["total"]
         
-        # Ventas eliminadas (para reposición)
         ventas_eliminadas = []
         if session.get('rol') == 'ADMIN':
             ventas_eliminadas = con.execute("""
@@ -643,9 +672,8 @@ def turnos():
     
     return render_template("turnos.html", turnos=turnos, mensual=mensual, ventas_eliminadas=ventas_eliminadas)
 
-# ========== 🆕 CERRAR TURNO (CAJA O ADMIN) ==========
 @app.route("/cerrar_turno")
-@caja_or_admin_required  # 🆕 Ahora CAJA también puede cerrar
+@caja_or_admin_required
 def cerrar_turno():
     with get_db() as con:
         turno = con.execute("SELECT * FROM turnos WHERE estado='ABIERTO'").fetchone()
@@ -665,9 +693,8 @@ def cerrar_turno():
         flash('No hay turno abierto', 'warning')
         return redirect("/turnos")
 
-# ========== 🆕 EDITAR TURNO CERRADO (SOLO ADMIN) ==========
 @app.route("/turnos/editar/<int:id>", methods=["GET", "POST"])
-@admin_required  # 🆕 SOLO ADMIN puede editar turnos cerrados
+@admin_required
 def editar_turno(id):
     with get_db() as con:
         turno = con.execute("SELECT * FROM turnos WHERE id=?", (id,)).fetchone()
@@ -693,7 +720,6 @@ def editar_turno(id):
             flash(f"✅ Turno #{id} actualizado correctamente", "success")
             return redirect("/turnos")
         
-        # GET: Mostrar formulario
         ventas_turno = con.execute("""
             SELECT * FROM ventas WHERE turno_id=? AND estado='OK' ORDER BY fecha_hora
         """, (id,)).fetchall()
@@ -708,12 +734,11 @@ from datetime import timedelta
 def reportes():
     """Panel de reportes semanales y mensuales"""
     with get_db() as con:
-        # Fecha actual
         hoy = date.today()
         
-        # ===== REPORTE SEMANAL =====
-        inicio_semana = hoy - timedelta(days=hoy.weekday())  # Lunes de esta semana
-        fin_semana = inicio_semana + timedelta(days=6)  # Domingo
+        # REPORTE SEMANAL
+        inicio_semana = hoy - timedelta(days=hoy.weekday())
+        fin_semana = inicio_semana + timedelta(days=6)
         
         ventas_semana = con.execute("""
             SELECT COUNT(*) as total
@@ -729,7 +754,6 @@ def reportes():
             AND estado='OK'
         """, (inicio_semana.isoformat(), fin_semana.isoformat())).fetchone()['total']
         
-        # Productos más vendidos de la semana
         top_semana = con.execute("""
             SELECT 
                 dv.producto, 
@@ -744,7 +768,6 @@ def reportes():
             LIMIT 10
         """, (inicio_semana.isoformat(), fin_semana.isoformat())).fetchall()
         
-        # Ventas por día de la semana
         ventas_por_dia_semana = con.execute("""
             SELECT 
                 DATE(fecha_hora) as fecha,
@@ -757,9 +780,8 @@ def reportes():
             ORDER BY fecha
         """, (inicio_semana.isoformat(), fin_semana.isoformat())).fetchall()
         
-        # ===== REPORTE MENSUAL =====
+        # REPORTE MENSUAL
         inicio_mes = hoy.replace(day=1)
-        # Último día del mes
         if hoy.month == 12:
             fin_mes = hoy.replace(year=hoy.year + 1, month=1, day=1) - timedelta(days=1)
         else:
@@ -779,7 +801,6 @@ def reportes():
             AND estado='OK'
         """, (inicio_mes.isoformat(), fin_mes.isoformat())).fetchone()['total']
         
-        # Productos más vendidos del mes
         top_mes = con.execute("""
             SELECT 
                 dv.producto, 
@@ -794,7 +815,6 @@ def reportes():
             LIMIT 15
         """, (inicio_mes.isoformat(), fin_mes.isoformat())).fetchall()
         
-        # Ventas por día del mes
         ventas_por_dia_mes = con.execute("""
             SELECT 
                 DATE(fecha_hora) as fecha,
@@ -807,7 +827,6 @@ def reportes():
             ORDER BY fecha
         """, (inicio_mes.isoformat(), fin_mes.isoformat())).fetchall()
         
-        # Ventas por tipo de pedido (mes)
         ventas_por_tipo = con.execute("""
             SELECT 
                 tipo_pedido,
@@ -819,7 +838,6 @@ def reportes():
             GROUP BY tipo_pedido
         """, (inicio_mes.isoformat(), fin_mes.isoformat())).fetchall()
         
-        # Ventas por medio de pago (mes)
         ventas_por_medio = con.execute("""
             SELECT 
                 medio_pago,
@@ -831,8 +849,7 @@ def reportes():
             GROUP BY medio_pago
         """, (inicio_mes.isoformat(), fin_mes.isoformat())).fetchall()
         
-        # ===== COMPARATIVAS =====
-        # Semana anterior
+        # COMPARATIVAS
         inicio_semana_ant = inicio_semana - timedelta(days=7)
         fin_semana_ant = inicio_semana_ant + timedelta(days=6)
         
@@ -843,7 +860,6 @@ def reportes():
             AND estado='OK'
         """, (inicio_semana_ant.isoformat(), fin_semana_ant.isoformat())).fetchone()['total']
         
-        # Mes anterior
         if inicio_mes.month == 1:
             inicio_mes_ant = inicio_mes.replace(year=inicio_mes.year - 1, month=12)
         else:
@@ -861,12 +877,10 @@ def reportes():
             AND estado='OK'
         """, (inicio_mes_ant.isoformat(), fin_mes_ant.isoformat())).fetchone()['total']
         
-        # Calcular variaciones
         var_semana = ((total_semana - total_semana_ant) / total_semana_ant * 100) if total_semana_ant > 0 else 0
         var_mes = ((total_mes - total_mes_ant) / total_mes_ant * 100) if total_mes_ant > 0 else 0
     
     return render_template('reportes.html',
-        # Semana
         inicio_semana=inicio_semana,
         fin_semana=fin_semana,
         ventas_semana=ventas_semana,
@@ -875,7 +889,6 @@ def reportes():
         ventas_por_dia_semana=ventas_por_dia_semana,
         total_semana_ant=total_semana_ant,
         var_semana=var_semana,
-        # Mes
         inicio_mes=inicio_mes,
         fin_mes=fin_mes,
         ventas_mes=ventas_mes,
@@ -888,7 +901,7 @@ def reportes():
         var_mes=var_mes
     )
 
-# ========== EXPORTAR REPORTE A CSV (OPCIONAL) ==========
+# ========== EXPORTAR REPORTE A CSV ==========
 @app.route("/reportes/exportar/<tipo>")
 @login_required
 def exportar_reporte(tipo):
@@ -903,7 +916,7 @@ def exportar_reporte(tipo):
         inicio = hoy - timedelta(days=hoy.weekday())
         fin = inicio + timedelta(days=6)
         nombre = f"reporte_semanal_{inicio.isoformat()}.csv"
-    else:  # mes
+    else:
         inicio = hoy.replace(day=1)
         if hoy.month == 12:
             fin = hoy.replace(year=hoy.year + 1, month=1, day=1) - timedelta(days=1)
@@ -929,7 +942,6 @@ def exportar_reporte(tipo):
             ORDER BY v.fecha_hora DESC
         """, (inicio.isoformat(), fin.isoformat())).fetchall()
     
-    # Crear CSV
     si = StringIO()
     writer = csv.writer(si)
     writer.writerow(['ID', 'Fecha/Hora', 'Usuario', 'Tipo', 'Medio Pago', 'Total', 'Productos'])
@@ -952,4 +964,4 @@ def exportar_reporte(tipo):
 
 # ========== MAIN ==========
 if __name__ == "__main__":
-    app.run(host="0.0.0.0")
+    app.run(host="0.0.0.0", debug=True)

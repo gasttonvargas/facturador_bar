@@ -16,7 +16,7 @@ def add_column(table, col, definition):
 add_column("ventas", "tipo_pedido", "TEXT DEFAULT 'mesa'")
 add_column("ventas", "direccion_entrega", "TEXT")
 add_column("ventas", "estado_pago", "TEXT DEFAULT 'pagado'")
-add_column("ventas", "estado_cocina", "TEXT DEFAULT 'pendiente'")
+add_column("ventas", "estado_delivery", "TEXT DEFAULT 'pendiente'")
 add_column("ventas", "estado_delivery", "TEXT DEFAULT 'pendiente'")
 add_column("ventas", "pago_recibido", "INTEGER DEFAULT 0")
 add_column("ventas", "vuelto", "INTEGER DEFAULT 0")

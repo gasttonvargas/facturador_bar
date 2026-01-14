@@ -1,0 +1,628 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+/* ===== RESET Y BASE ===== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+}
+
+body {
+    background: #f5f5f5;
+    overflow-x: hidden;
+}
+
+.mozo-app {
+    max-width: 100%;
+    padding: 0;
+    margin: 0;
+}
+
+/* ===== HEADER STICKY ===== */
+.app-header {
+    position: sticky;
+    top: 60px; /* Altura del navbar */
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    padding: 15px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    z-index: 100;
+}
+
+.header-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: white;
+}
+
+.mozo-nombre {
+    font-size: 18px;
+    font-weight: 700;
+}
+
+.turno-badge {
+    background: rgba(255,255,255,0.3);
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+/* ===== TABS DE NAVEGACIÓN ===== */
+.tabs-container {
+    position: sticky;
+    top: 110px; /* navbar + header */
+    background: white;
+    border-bottom: 2px solid #e0e0e0;
+    z-index: 99;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.tabs {
+    display: flex;
+    gap: 0;
+    min-width: 100%;
+}
+
+.tab {
+    flex: 1;
+    padding: 15px 10px;
+    background: none;
+    border: none;
+    border-bottom: 3px solid transparent;
+    font-size: 14px;
+    font-weight: 600;
+    color: #666;
+    cursor: pointer;
+    transition: 0.2s;
+    white-space: nowrap;
+    text-align: center;
+}
+
+.tab.active {
+    color: #28a745;
+    border-bottom-color: #28a745;
+    background: #f0f9f0;
+}
+
+/* ===== CONTENIDO TABS ===== */
+.tab-content {
+    display: none;
+    padding: 15px;
+    min-height: calc(100vh - 200px);
+}
+
+.tab-content.active {
+    display: block;
+}
+
+/* ===== LISTA DE MESAS ===== */
+.mesas-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.mesa-card {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    text-align: center;
+    cursor: pointer;
+    transition: 0.2s;
+    border: 3px solid transparent;
+    position: relative;
+}
+
+.mesa-card:active {
+    transform: scale(0.95);
+}
+
+.mesa-card.ocupada {
+    background: #fff3cd;
+    border-color: #ffc107;
+}
+
+.mesa-card.disponible {
+    background: #d4edda;
+    border-color: #28a745;
+}
+
+.mesa-numero {
+    font-size: 32px;
+    font-weight: 700;
+    margin-bottom: 8px;
+}
+
+.mesa-estado {
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: #666;
+}
+
+.mesa-ocupada .mesa-numero {
+    color: #856404;
+}
+
+.mesa-disponible .mesa-numero {
+    color: #155724;
+}
+
+/* ===== PEDIDOS PENDIENTES ===== */
+.pedidos-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.pedido-card {
+    background: white;
+    border-radius: 12px;
+    padding: 15px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    border-left: 5px solid #ffc107;
+}
+
+.pedido-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid #f0f0f0;
+}
+
+.pedido-mesa {
+    font-size: 20px;
+    font-weight: 700;
+    color: #1e1e1e;
+}
+
+.pedido-hora {
+    font-size: 12px;
+    color: #666;
+}
+
+.pedido-items {
+    margin-bottom: 12px;
+}
+
+.pedido-item {
+    padding: 8px 0;
+    border-bottom: 1px solid #f0f0f0;
+    font-size: 14px;
+}
+
+.pedido-item:last-child {
+    border-bottom: none;
+}
+
+.pedido-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.pedido-total {
+    font-size: 18px;
+    font-weight: 700;
+    color: #28a745;
+}
+
+.btn-confirmar {
+    padding: 10px 20px;
+    background: #28a745;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.btn-confirmar:active {
+    transform: scale(0.95);
+}
+
+/* ===== VENTAS DEL DÍA ===== */
+.ventas-stats {
+    background: linear-gradient(135deg, #28a745, #20c997);
+    color: white;
+    padding: 20px;
+    border-radius: 12px;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.ventas-stats h3 {
+    font-size: 14px;
+    opacity: 0.9;
+    margin-bottom: 8px;
+}
+
+.ventas-stats .total {
+    font-size: 36px;
+    font-weight: 700;
+}
+
+.ventas-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.venta-card {
+    background: white;
+    border-radius: 8px;
+    padding: 12px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.venta-info {
+    flex: 1;
+}
+
+.venta-numero {
+    font-weight: 700;
+    color: #1e1e1e;
+}
+
+.venta-detalle {
+    font-size: 12px;
+    color: #666;
+    margin-top: 2px;
+}
+
+.venta-total {
+    font-size: 18px;
+    font-weight: 700;
+    color: #28a745;
+}
+
+/* ===== BOTÓN FLOTANTE NUEVA VENTA ===== */
+.fab {
+    position: fixed;
+    bottom: 80px;
+    right: 20px;
+    width: 60px;
+    height: 60px;
+    background: #28a745;
+    border-radius: 50%;
+    box-shadow: 0 6px 20px rgba(40, 167, 69, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 1000;
+    transition: 0.3s;
+}
+
+.fab:active {
+    transform: scale(0.9);
+}
+
+.fab svg {
+    width: 30px;
+    height: 30px;
+    fill: white;
+}
+
+/* ===== MENSAJE VACÍO ===== */
+.empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: #999;
+}
+
+.empty-state svg {
+    width: 80px;
+    height: 80px;
+    fill: #ddd;
+    margin-bottom: 15px;
+}
+
+.empty-state h3 {
+    font-size: 18px;
+    margin-bottom: 8px;
+}
+
+.empty-state p {
+    font-size: 14px;
+}
+
+/* ===== OPTIMIZACIONES MÓVILES ===== */
+@media (max-width: 480px) {
+    .app-header {
+        padding: 12px;
+    }
+    
+    .mozo-nombre {
+        font-size: 16px;
+    }
+    
+    .mesas-grid {
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+        gap: 10px;
+    }
+    
+    .mesa-numero {
+        font-size: 28px;
+    }
+    
+    .tab {
+        font-size: 13px;
+        padding: 12px 8px;
+    }
+}
+
+/* ===== PULL TO REFRESH (visual) ===== */
+.pull-indicator {
+    position: fixed;
+    top: 60px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-60px);
+    background: #28a745;
+    color: white;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    opacity: 0;
+    transition: 0.3s;
+    z-index: 9999;
+}
+
+.pull-indicator.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(10px);
+}
+
+/* ===== ANIMACIONES ===== */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.pedido-card, .venta-card, .mesa-card {
+    animation: fadeIn 0.3s ease;
+}
+</style>
+
+<div class="mozo-app">
+    <!-- HEADER -->
+    <div class="app-header">
+        <div class="header-info">
+            <div class="mozo-nombre">👋 {{ session.username }}</div>
+            <div class="turno-badge">Turno #{{ turno.id }}</div>
+        </div>
+    </div>
+
+    <!-- TABS -->
+    <div class="tabs-container">
+        <div class="tabs">
+            <button class="tab active" onclick="showTab('mesas')">
+                🪑 Mesas
+            </button>
+            <button class="tab" onclick="showTab('pedidos')">
+                📋 Pedidos
+            </button>
+            <button class="tab" onclick="showTab('ventas')">
+                💰 Mis Ventas
+            </button>
+        </div>
+    </div>
+
+    <!-- TAB: MESAS -->
+    <div id="tab-mesas" class="tab-content active">
+        <h3 style="margin-bottom: 15px; color: #1e1e1e;">Selecciona una mesa</h3>
+        
+        <div class="mesas-grid">
+            {% for i in range(1, 21) %}
+            <div class="mesa-card disponible" onclick="tomarPedido({{ i }})">
+                <div class="mesa-numero">{{ i }}</div>
+                <div class="mesa-estado">Disponible</div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- TAB: PEDIDOS PENDIENTES -->
+    <div id="tab-pedidos" class="tab-content">
+        {% if pedidos %}
+        <div class="pedidos-list">
+            {% for p in pedidos %}
+            <div class="pedido-card">
+                <div class="pedido-header">
+                    <div>
+                        <div class="pedido-mesa">Mesa {{ p.mesa }}</div>
+                        <div class="pedido-hora">{{ p.fecha_hora[11:16] }}</div>
+                    </div>
+                </div>
+
+                <div class="pedido-items">
+                    {% for d in p.detalle %}
+                    <div class="pedido-item">
+                        <strong>{{ d.cantidad }}x</strong> {{ d.producto }}
+                        {% if d.extras %}
+                        <div style="font-size: 12px; color: #666;">✓ {{ d.extras }}</div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <div class="pedido-footer">
+                    <div class="pedido-total">${{ p.total }}</div>
+                    <a href="/pedidos/confirmar/{{ p.id }}" 
+                       onclick="return confirm('¿Confirmar pedido Mesa {{ p.mesa }}?')">
+                        <button class="btn-confirmar">✓ Confirmar</button>
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <svg viewBox="0 0 24 24">
+                <path d="M9,2V8H11V11H5C3.89,11 3,11.89 3,13V16H1V22H7V16H5V13H19V16H17V22H23V16H21V13C21,11.89 20.11,11 19,11H13V8H15V2M13,8V11H11V8"/>
+            </svg>
+            <h3>Sin pedidos pendientes</h3>
+            <p>Los nuevos pedidos aparecerán aquí</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- TAB: MIS VENTAS -->
+    <div id="tab-ventas" class="tab-content">
+        <div class="ventas-stats">
+            <h3>Total de mis ventas hoy</h3>
+            <div class="total">${{ mis_ventas_total }}</div>
+            <p style="margin-top: 8px; opacity: 0.9;">{{ mis_ventas|length }} operaciones</p>
+        </div>
+
+        {% if mis_ventas %}
+        <div class="ventas-list">
+            {% for v in mis_ventas %}
+            <div class="venta-card">
+                <div class="venta-info">
+                    <div class="venta-numero">Venta #{{ v.id }}</div>
+                    <div class="venta-detalle">
+                        {{ v.fecha_hora[11:16] }} - {{ v.tipo_pedido }}
+                    </div>
+                </div>
+                <div class="venta-total">${{ v.total }}</div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <h3>Aún no hay ventas</h3>
+            <p>Tus ventas del día aparecerán aquí</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- BOTÓN FLOTANTE NUEVA VENTA -->
+    <a href="/" class="fab" title="Nueva venta">
+        <svg viewBox="0 0 24 24">
+            <path d="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z"/>
+        </svg>
+    </a>
+</div>
+
+<!-- INDICADOR PULL TO REFRESH -->
+<div class="pull-indicator" id="pullIndicator">
+    🔄 Actualizando...
+</div>
+
+<script>
+// ===== GESTIÓN DE TABS =====
+function showTab(tabName) {
+    // Ocultar todos los tabs
+    document.querySelectorAll('.tab-content').forEach(tab => {
+        tab.classList.remove('active');
+    });
+    
+    document.querySelectorAll('.tab').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    
+    // Mostrar tab seleccionado
+    document.getElementById('tab-' + tabName).classList.add('active');
+    event.target.classList.add('active');
+    
+    // Guardar preferencia
+    localStorage.setItem('mozo-tab-activo', tabName);
+}
+
+// Restaurar tab activo al cargar
+window.addEventListener('load', () => {
+    const tabActivo = localStorage.getItem('mozo-tab-activo');
+    if (tabActivo && tabActivo !== 'mesas') {
+        const btn = document.querySelector(`.tab[onclick*="${tabActivo}"]`);
+        if (btn) btn.click();
+    }
+});
+
+// ===== TOMAR PEDIDO =====
+function tomarPedido(mesa) {
+    if (confirm(`¿Tomar pedido para Mesa ${mesa}?`)) {
+        window.location.href = `/mesa/${mesa}`;
+    }
+}
+
+// ===== AUTO-REFRESH SOLO EN TAB PEDIDOS =====
+let refreshInterval;
+
+function startAutoRefresh() {
+    clearInterval(refreshInterval);
+    refreshInterval = setInterval(() => {
+        const tabPedidos = document.getElementById('tab-pedidos');
+        if (tabPedidos.classList.contains('active')) {
+            showPullIndicator();
+            setTimeout(() => location.reload(), 500);
+        }
+    }, 15000); // Cada 15 segundos
+}
+
+function showPullIndicator() {
+    const indicator = document.getElementById('pullIndicator');
+    indicator.classList.add('show');
+    setTimeout(() => {
+        indicator.classList.remove('show');
+    }, 1500);
+}
+
+startAutoRefresh();
+
+// ===== PREVENIR ZOOM EN DOBLE TAP =====
+let lastTouchEnd = 0;
+document.addEventListener('touchend', (e) => {
+    const now = Date.now();
+    if (now - lastTouchEnd <= 300) {
+        e.preventDefault();
+    }
+    lastTouchEnd = now;
+}, false);
+
+// ===== OPTIMIZACIÓN: Detener refresh si el usuario está escribiendo =====
+let userActive = false;
+document.addEventListener('touchstart', () => {
+    userActive = true;
+    setTimeout(() => userActive = false, 3000);
+});
+
+// ===== VIBRACIÓN AL CONFIRMAR =====
+document.querySelectorAll('.btn-confirmar').forEach(btn => {
+    btn.addEventListener('click', () => {
+        if ('vibrate' in navigator) {
+            navigator.vibrate(50);
+        }
+    });
+});
+
+// ===== SOPORTE OFFLINE (PWA básico) =====
+window.addEventListener('offline', () => {
+    alert('📡 Sin conexión a internet');
+});
+
+window.addEventListener('online', () => {
+    location.reload();
+});
+</script>
+
+{% endblock %}

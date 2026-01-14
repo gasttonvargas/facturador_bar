@@ -1,0 +1,237 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+/* ===== ESTILOS PANEL DELIVERY ===== */
+.delivery-wrap { max-width: 1400px; margin: 20px auto; padding: 20px; }
+h1 { color: #1e1e1e; margin-bottom: 25px; display: flex; align-items: center; gap: 10px; }
+
+.stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 30px; }
+.stat-card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); text-align: center; }
+.stat-label { font-size: 13px; color: #666; text-transform: uppercase; margin-bottom: 8px; font-weight: 600; }
+.stat-value { font-size: 32px; font-weight: 700; color: #1e1e1e; }
+.stat-value.success { color: #28a745; }
+.stat-value.warning { color: #ffc107; }
+.stat-value.info { color: #17a2b8; }
+
+.pedidos-section { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin-bottom: 25px; }
+.section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid #f0f0f0; }
+.section-title { font-size: 20px; font-weight: 700; color: #1e1e1e; }
+.pedidos-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); gap: 20px; }
+
+.pedido-card { background: #f0f9f0; border-radius: 12px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); border-left: 5px solid #28a745; transition: 0.2s; }
+.pedido-card.listo { border-left-color: #ffc107; background: #fffaf0; }
+.pedido-card.enviado { border-left-color: #17a2b8; background: #f0faff; }
+.pedido-card:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.15); }
+
+.pedido-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px; padding-bottom: 15px; border-bottom: 2px solid #f0f0f0; }
+.pedido-numero { font-size: 24px; font-weight: 700; color: #1e1e1e; }
+.pedido-hora { font-size: 13px; color: #666; margin-top: 4px; }
+.pedido-badges { display: flex; flex-direction: column; gap: 5px; align-items: flex-end; }
+
+.badge { padding: 5px 12px; border-radius: 12px; font-size: 11px; font-weight: 700; text-transform: uppercase; white-space: nowrap; }
+.badge-listo { background: #fff3cd; color: #856404; }
+.badge-enviado { background: #d1ecf1; color: #0c5460; }
+.badge-pago-pendiente { background: #f8d7da; color: #721c24; animation: pulse 1.5s infinite; }
+
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
+
+.direccion { background: #fff3cd; padding: 12px; border-radius: 8px; margin-bottom: 15px; border-left: 4px solid #ffc107; }
+.direccion strong { display: block; font-size: 11px; color: #856404; margin-bottom: 4px; text-transform: uppercase; }
+.direccion-texto { font-size: 14px; font-weight: 600; color: #1e1e1e; }
+
+.detalle-items { margin-bottom: 15px; }
+.detalle-item { padding: 10px; margin-bottom: 8px; background: #f8f8f8; border-radius: 8px; border-left: 3px solid #28a745; font-size: 14px; }
+.detalle-item strong { display: block; margin-bottom: 4px; color: #1e1e1e; }
+.detalle-extras { font-size: 12px; color: #666; margin-top: 4px; padding-left: 8px; }
+.detalle-obs { font-size: 12px; color: #dc3545; font-weight: 600; margin-top: 4px; padding: 5px; background: #fff3cd; border-radius: 4px; }
+
+.pedido-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 15px; padding-top: 15px; border-top: 2px solid #f0f0f0; }
+.pedido-total { font-size: 20px; font-weight: 700; color: #28a745; }
+.pedido-pago { font-size: 12px; color: #666; }
+
+.btn-action { width: 100%; padding: 14px; border: none; border-radius: 8px; font-size: 15px; font-weight: 700; cursor: pointer; text-decoration: none; display: block; text-align: center; margin-top: 12px; transition: 0.2s; }
+.btn-salio { background: #17a2b8; color: white; }
+.btn-salio:hover { background: #138496; transform: translateY(-2px); }
+.btn-entregado { background: #28a745; color: white; }
+.btn-entregado:hover { background: #218838; transform: translateY(-2px); }
+
+/* Historial */
+.historial-list { display: grid; gap: 12px; }
+.historial-item { display: flex; justify-content: space-between; align-items: center; padding: 12px; background: #f8f8f8; border-radius: 8px; border-left: 4px solid #28a745; }
+.historial-info { flex: 1; }
+.historial-numero { font-weight: 700; color: #1e1e1e; }
+.historial-direccion { font-size: 13px; color: #666; margin-top: 2px; }
+.historial-total { font-weight: 700; color: #28a745; font-size: 16px; }
+
+/* Vacío */
+.no-pedidos { text-align: center; padding: 80px 20px; color: #999; }
+.no-pedidos h3 { font-size: 24px; margin-bottom: 10px; }
+
+@media (max-width: 768px) {
+    .delivery-wrap { padding: 15px; }
+    .stats-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+    .stat-value { font-size: 24px; }
+    .pedidos-grid { grid-template-columns: 1fr; gap: 15px; }
+    .pedido-card { padding: 15px; }
+    .pedido-numero { font-size: 20px; }
+}
+
+.refresh-indicator { position: fixed; bottom: 20px; right: 20px; background: #28a745; color: white; padding: 10px 15px; border-radius: 20px; font-size: 12px; font-weight: 600; box-shadow: 0 4px 12px rgba(0,0,0,0.2); opacity: 0; transition: opacity 0.3s; }
+.refresh-indicator.show { opacity: 1; }
+</style>
+
+<div class="delivery-wrap">
+    <h1>🏍️ Panel de Control Delivery</h1>
+
+    <!-- ESTADÍSTICAS -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-label">Total del Día</div>
+            <div class="stat-value">{{ stats.total_pedidos if stats is defined else 0 }}</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Facturado</div>
+            <div class="stat-value success">${{ stats.total_facturado or 0 }}</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Listos p/ Enviar</div>
+            <div class="stat-value warning">{{ stats.listos_enviar or 0 }}</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">En Camino</div>
+            <div class="stat-value info">{{ stats.salio or 0 }}</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Entregados</div>
+            <div class="stat-value success">{{ stats.entregados or 0 }}</div>
+        </div>
+    </div>
+
+    <!-- PEDIDOS ACTIVOS -->
+    <div class="pedidos-section">
+        <div class="section-header">
+            <h2 class="section-title">📦 Pedidos Activos ({{ deliveries|length }})</h2>
+        </div>
+
+        {% if deliveries %}
+        <div class="pedidos-grid">
+            {% for pedido in deliveries %}
+            <div class="pedido-card {% if pedido.estado_delivery=='listo' %}listo{% elif pedido.estado_delivery=='enviado' %}enviado{% endif %}">
+                <div class="pedido-header">
+                    <div>
+                        <div class="pedido-numero">Pedido #{{ pedido.id }}</div>
+                        <div class="pedido-hora">🕐 {{ pedido.fecha_hora[11:16] if pedido.fecha_hora else 'Ahora' }}</div>
+                    </div>
+                    <div class="pedido-badges">
+                        {% if pedido.estado_delivery=='listo' %}
+                            <span class="badge badge-listo">📦 Listo p/ Enviar</span>
+                        {% elif pedido.estado_delivery=='enviado' %}
+                            <span class="badge badge-enviado">🚚 En Camino</span>
+                        {% endif %}
+                        {% if pedido.estado_pago=='pendiente' %}
+                            <span class="badge badge-pago-pendiente">💰 Cobrar</span>
+                        {% endif %}
+                    </div>
+                </div>
+
+                {% if pedido.direccion_entrega %}
+                <div class="direccion">
+                    <strong>📍 Dirección de Entrega:</strong>
+                    <div class="direccion-texto">{{ pedido.direccion_entrega }}</div>
+                </div>
+                {% endif %}
+
+                <div class="detalle-items">
+                    {% for item in pedido.detalle %}
+                    <div class="detalle-item">
+                        <strong>{{ item.cantidad }}x {{ item.producto }}</strong>
+                        {% if item.extras and item.extras.strip() %}<div class="detalle-extras">✓ Con: {{ item.extras }}</div>{% endif %}
+                        {% if item.observaciones and item.observaciones.strip() %}<div class="detalle-obs">⚠️ {{ item.observaciones }}</div>{% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <div class="pedido-footer">
+                    <div>
+                        <div class="pedido-total">Total: ${{ pedido.total }}</div>
+                        <div class="pedido-pago">{{ pedido.medio_pago }}{% if pedido.estado_pago=='pendiente' %} - <strong style="color:#dc3545;">Cobrar al entregar</strong>{% endif %}</div>
+                    </div>
+                </div>
+
+                <!-- BOTONES DE ACCIÓN -->
+                {% if pedido.estado_delivery=='listo' %}
+                    <a href="/delivery/salio/{{ pedido.id }}" class="btn-action btn-salio"
+                       onclick="return confirm('¿Marcar pedido #{{ pedido.id }} como SALIÓ?')">
+                       🏍️ Marcar como Salió
+                    </a>
+                {% elif pedido.estado_delivery=='enviado' %}
+                    <a href="/delivery/finalizado/{{ pedido.id }}" class="btn-action btn-entregado"
+                       onclick="return confirm('¿Confirmar ENTREGA del pedido #{{ pedido.id }}?')">
+                       ✅ Marcar como Entregado
+                    </a>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="no-pedidos">
+            <h3>✅ Todo en orden!</h3>
+            <p>No hay pedidos delivery pendientes</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- HISTORIAL DE ENTREGADOS HOY -->
+    {% if entregados %}
+    <div class="pedidos-section">
+        <div class="section-header">
+            <h2 class="section-title">✅ Entregados Hoy ({{ entregados|length }})</h2>
+        </div>
+        <div class="historial-list">
+            {% for pedido in entregados %}
+            <div class="historial-item">
+                <div class="historial-info">
+                    <div class="historial-numero">Pedido #{{ pedido.id }} - {{ pedido.fecha_hora[11:16] if pedido.fecha_hora else 'Hoy' }}</div>
+                    {% if pedido.direccion_entrega %}
+                    <div class="historial-direccion">📍 {{ pedido.direccion_entrega }}</div>
+                    {% endif %}
+                </div>
+                <div class="historial-total">${{ pedido.total }}</div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<div class="refresh-indicator" id="refreshIndicator">🔄 Actualizando...</div>
+
+<script>
+// Auto-refresh cada 10 segundos
+let refreshInterval = setInterval(() => {
+    showRefreshIndicator();
+    location.reload();
+}, 10000);
+
+function showRefreshIndicator() {
+    const indicator = document.getElementById('refreshIndicator');
+    indicator.classList.add('show');
+    setTimeout(() => { indicator.classList.remove('show'); }, 1000);
+}
+
+let userActive = false;
+let resetTimer;
+document.addEventListener('mousemove', () => {
+    userActive = true;
+    clearTimeout(resetTimer);
+    resetTimer = setTimeout(() => { userActive = false; }, 3000);
+});
+
+const originalInterval = setInterval;
+setInterval = function(fn, delay) {
+    return originalInterval(() => { if(!userActive) fn(); }, delay);
+};
+</script>
+
+{% endblock %}
