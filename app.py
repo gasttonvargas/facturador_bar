@@ -5,6 +5,8 @@ from datetime import date, datetime
 from functools import wraps
 from hashlib import sha256
 from contextlib import contextmanager
+from flask import send_from_directory
+
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "dev_secret")
@@ -961,6 +963,19 @@ def exportar_reporte(tipo):
     output.headers["Content-Disposition"] = f"attachment; filename={nombre}"
     output.headers["Content-type"] = "text/csv"
     return output
+
+
+# ========== PWA ROUTES ==========
+# ========== PWA ROUTES ==========
+
+@app.route("/mozo")
+def mozo_index():
+    return send_from_directory("static/pwa", "index.html")
+
+@app.route("/mozo/<path:filename>")
+def mozo_static(filename):
+    return send_from_directory("static/pwa", filename)
+    
 
 # ========== MAIN ==========
 if __name__ == "__main__":

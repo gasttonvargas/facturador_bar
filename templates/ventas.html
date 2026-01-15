@@ -1,3 +1,4 @@
+
 {% extends "base.html" %}
 {% block content %}
 
@@ -255,8 +256,50 @@ a.cerrar{
     overflow-y:auto;
 }
 
+/* ===== BUSCADOR DE PRODUCTOS ===== */
+.buscador-productos{
+    position:sticky;
+    top:0;
+    background:#f5f5f5;
+    padding:15px;
+    z-index:100;
+    border-bottom:3px solid #28a745;
+    box-shadow:0 2px 8px rgba(0,0,0,0.1);
+}
+
+.buscador-productos input{
+    width:100%;
+    padding:14px 20px;
+    font-size:16px;
+    border:2px solid #ddd;
+    border-radius:10px;
+    background:white;
+    transition:0.2s;
+}
+
+.buscador-productos input:focus{
+    outline:none;
+    border-color:#28a745;
+    box-shadow:0 0 0 3px rgba(40,167,69,0.1);
+}
+
+.buscador-productos input::placeholder{
+    color:#999;
+}
+
+.resultados-info{
+    margin-top:8px;
+    font-size:13px;
+    color:#666;
+    text-align:center;
+}
+
 /* ===== PANEL DERECHO - PRODUCTOS ===== */
-.der{padding:15px;overflow-y:auto;background:#f5f5f5;}
+.der{padding:0;overflow-y:auto;background:#f5f5f5;}
+
+.productos-contenido{
+    padding:15px;
+}
 
 .categoria{margin-bottom:25px;}
 .categoria h3{
@@ -266,6 +309,10 @@ a.cerrar{
     border-radius:8px;
     margin-bottom:12px;
     font-size:16px;
+}
+
+.categoria.oculta{
+    display:none;
 }
 
 .productos{
@@ -281,6 +328,15 @@ a.cerrar{
     box-shadow:0 2px 8px rgba(0,0,0,.12);
     transition:0.2s;
     border:2px solid transparent;
+}
+
+.producto.oculto{
+    display:none;
+}
+
+.producto.destacado{
+    border-color:#28a745;
+    box-shadow:0 4px 16px rgba(40,167,69,0.3);
 }
 
 .producto:hover{
@@ -465,7 +521,7 @@ a.cerrar{
             <select name="tipo_pedido" form="formVenta" id="tipoPedido" required>
                 <option value="mesa">🍽️ Mesa</option>
                 <option value="delivery">🏍️ Delivery</option>
-                <option value="retiro">🏪 Retiro del local</option>
+                <option value="retiro">🪂 Retiro del local</option>
             </select>
         </div>
 
@@ -529,19 +585,19 @@ a.cerrar{
         <div class="ventas-lista">
             {% for v in ventas %}
             <div class="item">
-    <span>#{{ v.id }} — ${{ v.total }} [{{ v.tipo_pedido }}]</span>
-    <div>
-        <a href="{{ url_for('imprimir_comanda', venta_id=v.id) }}" 
-           style="color:#17a2b8;margin-right:6px;" target="_blank">🖨️</a>
+                <span>#{{ v.id }} — ${{ v.total }} [{{ v.tipo_pedido }}]</span>
+                <div>
+                    <a href="{{ url_for('imprimir_comanda', venta_id=v.id) }}" 
+                       style="color:#17a2b8;margin-right:6px;" target="_blank">🖨️</a>
 
-        <a href="{{ url_for('editar_venta', id=v.id) }}" 
-           style="color:#ffc107;margin-right:6px;">✏</a>
+                    <a href="{{ url_for('editar_venta', id=v.id) }}" 
+                       style="color:#ffc107;margin-right:6px;">✏</a>
 
-        <a href="{{ url_for('eliminar_venta', id=v.id) }}"
-           onclick="return confirm('⚠️ ¿Eliminar esta venta? Esta acción no se puede deshacer');"
-           style="color:#dc3545;">🗑️</a>
-    </div>
-</div>
+                    <a href="{{ url_for('eliminar_venta', id=v.id) }}"
+                       onclick="return confirm('⚠️ ¿Eliminar esta venta? Esta acción no se puede deshacer');"
+                       style="color:#dc3545;">🗑️</a>
+                </div>
+            </div>
             {% endfor %}
         </div>
     </div>
@@ -549,62 +605,71 @@ a.cerrar{
 
 <!-- ===== PANEL DERECHO - PRODUCTOS ===== -->
 <div class="der">
-{% for categoria, prods in categorias.items() %}
-<div class="categoria">
-    <h3>{{ categoria }}</h3>
-    <div class="productos">
-    {% for p in prods %}
-    <div class="producto" data-id="{{ p.id }}" data-nombre="{{ p.nombre }}" 
-         data-precio="{{ p.precio }}" data-tipo="{{ p.tipo or 'normal' }}">
-        <strong>{{ p.nombre }}</strong>
-        <div class="precio">${{ p.precio }}</div>
-        <div class="ctrl">
-            <button type="button" onclick="cambiar({{ p.id }},-1)">−</button>
-            <input type="number" min="0" value="0" id="prod_{{ p.id }}" 
-                   name="prod_{{ p.id }}" form="formVenta">
-            <button type="button" onclick="cambiar({{ p.id }},1)">+</button>
-        </div>
-        
-        <!-- EXTRAS PARA SANGUCHES -->
-        {% if 'Milanesa' in p.nombre or 'Lomito' in p.nombre or 'Hamburguesa' in p.nombre %}
-        <div class="producto-extras" id="extras_{{ p.id }}">
-            <strong>¿Qué lleva?</strong>
-            <div class="extras-checks">
-                <label><input type="checkbox" value="lechuga"> Lechuga</label>
-                <label><input type="checkbox" value="tomate"> Tomate</label>
-                <label><input type="checkbox" value="mayonesa"> Mayonesa</label>
-                <label><input type="checkbox" value="savora"> Savora</label>
-                <label><input type="checkbox" value="ketchup"> Ketchup</label>
-                <label><input type="checkbox" value="ají"> Ají</label>
-            </div>
-            <textarea placeholder="Observaciones..." rows="2" class="obs-field"></textarea>
-        </div>
-        {% endif %}
+    <!-- BUSCADOR -->
+    <div class="buscador-productos">
+        <input type="text" id="buscadorProductos" placeholder="🔍 Buscar productos..." autocomplete="off">
+        <div class="resultados-info" id="resultadosInfo"></div>
+    </div>
 
-        <!-- EXTRAS PARA ESPECIALES -->
-        {% if 'Especial' in p.nombre %}
-        <div class="producto-extras" id="extras_{{ p.id }}">
-            <strong>Ingredientes Especial:</strong>
-            <div class="extras-checks">
-                <label><input type="checkbox" value="jamón"> Jamón</label>
-                <label><input type="checkbox" value="queso"> Queso</label>
-                <label><input type="checkbox" value="huevo"> Huevo</label>
-                <label><input type="checkbox" value="papas"> Papas</label>
-                <label><input type="checkbox" value="lechuga"> Lechuga</label>
-                <label><input type="checkbox" value="tomate"> Tomate</label>
-                <label><input type="checkbox" value="mayonesa"> Mayonesa</label>
-                <label><input type="checkbox" value="savora"> Savora</label>
-                <label><input type="checkbox" value="ketchup"> Ketchup</label>
-                <label><input type="checkbox" value="ají"> Ají</label>
+    <div class="productos-contenido">
+        {% for categoria, prods in categorias.items() %}
+        <div class="categoria" data-categoria="{{ categoria }}">
+            <h3>{{ categoria }}</h3>
+            <div class="productos">
+            {% for p in prods %}
+            <div class="producto" data-id="{{ p.id }}" data-nombre="{{ p.nombre }}" 
+                 data-precio="{{ p.precio }}" data-tipo="{{ p.tipo or 'normal' }}"
+                 data-categoria="{{ categoria }}">
+                <strong>{{ p.nombre }}</strong>
+                <div class="precio">${{ p.precio }}</div>
+                <div class="ctrl">
+                    <button type="button" onclick="cambiar({{ p.id }},-1)">−</button>
+                    <input type="number" min="0" value="0" id="prod_{{ p.id }}" 
+                           name="prod_{{ p.id }}" form="formVenta">
+                    <button type="button" onclick="cambiar({{ p.id }},1)">+</button>
+                </div>
+                
+                <!-- EXTRAS PARA SANGUCHES -->
+                {% if 'Milanesa' in p.nombre or 'Lomito' in p.nombre or 'Hamburguesa' in p.nombre %}
+                <div class="producto-extras" id="extras_{{ p.id }}">
+                    <strong>¿Qué lleva?</strong>
+                    <div class="extras-checks">
+                        <label><input type="checkbox" value="lechuga"> Lechuga</label>
+                        <label><input type="checkbox" value="tomate"> Tomate</label>
+                        <label><input type="checkbox" value="mayonesa"> Mayonesa</label>
+                        <label><input type="checkbox" value="savora"> Savora</label>
+                        <label><input type="checkbox" value="ketchup"> Ketchup</label>
+                        <label><input type="checkbox" value="ají"> Ají</label>
+                    </div>
+                    <textarea placeholder="Observaciones..." rows="2" class="obs-field"></textarea>
+                </div>
+                {% endif %}
+
+                <!-- EXTRAS PARA ESPECIALES -->
+                {% if 'Especial' in p.nombre %}
+                <div class="producto-extras" id="extras_{{ p.id }}">
+                    <strong>Ingredientes Especial:</strong>
+                    <div class="extras-checks">
+                        <label><input type="checkbox" value="jamón"> Jamón</label>
+                        <label><input type="checkbox" value="queso"> Queso</label>
+                        <label><input type="checkbox" value="huevo"> Huevo</label>
+                        <label><input type="checkbox" value="papas"> Papas</label>
+                        <label><input type="checkbox" value="lechuga"> Lechuga</label>
+                        <label><input type="checkbox" value="tomate"> Tomate</label>
+                        <label><input type="checkbox" value="mayonesa"> Mayonesa</label>
+                        <label><input type="checkbox" value="savora"> Savora</label>
+                        <label><input type="checkbox" value="ketchup"> Ketchup</label>
+                        <label><input type="checkbox" value="ají"> Ají</label>
+                    </div>
+                    <textarea placeholder="Observaciones..." rows="2" class="obs-field"></textarea>
+                </div>
+                {% endif %}
             </div>
-            <textarea placeholder="Observaciones..." rows="2" class="obs-field"></textarea>
+            {% endfor %}
+            </div>
         </div>
-        {% endif %}
+        {% endfor %}
     </div>
-    {% endfor %}
-    </div>
-</div>
-{% endfor %}
 </div>
 </div>
 
@@ -623,6 +688,70 @@ a.cerrar{
 
 <script>
 let pedido = {}, total = 0;
+
+// ===== BUSCADOR DE PRODUCTOS =====
+const buscador = document.getElementById('buscadorProductos');
+const resultadosInfo = document.getElementById('resultadosInfo');
+const productos = document.querySelectorAll('.producto');
+const categorias = document.querySelectorAll('.categoria');
+
+buscador.addEventListener('input', (e) => {
+    const termino = e.target.value.toLowerCase().trim();
+    
+    if(termino === '') {
+        // Mostrar todo
+        productos.forEach(p => {
+            p.classList.remove('oculto', 'destacado');
+        });
+        categorias.forEach(c => {
+            c.classList.remove('oculta');
+        });
+        resultadosInfo.textContent = '';
+        return;
+    }
+    
+    let encontrados = 0;
+    
+    // Filtrar productos
+    productos.forEach(prod => {
+        const nombre = prod.dataset.nombre.toLowerCase();
+        if(nombre.includes(termino)) {
+            prod.classList.remove('oculto');
+            prod.classList.add('destacado');
+            encontrados++;
+        } else {
+            prod.classList.add('oculto');
+            prod.classList.remove('destacado');
+        }
+    });
+    
+    // Ocultar categorías vacías
+    categorias.forEach(cat => {
+        const productosVisibles = cat.querySelectorAll('.producto:not(.oculto)');
+        if(productosVisibles.length === 0) {
+            cat.classList.add('oculta');
+        } else {
+            cat.classList.remove('oculta');
+        }
+    });
+    
+    // Mostrar info de resultados
+    if(encontrados === 0) {
+        resultadosInfo.textContent = '❌ No se encontraron productos';
+        resultadosInfo.style.color = '#dc3545';
+    } else {
+        resultadosInfo.textContent = `✅ ${encontrados} producto${encontrados !== 1 ? 's' : ''} encontrado${encontrados !== 1 ? 's' : ''}`;
+        resultadosInfo.style.color = '#28a745';
+    }
+});
+
+// Limpiar búsqueda con ESC
+buscador.addEventListener('keydown', (e) => {
+    if(e.key === 'Escape') {
+        e.target.value = '';
+        e.target.dispatchEvent(new Event('input'));
+    }
+});
 
 // Mostrar/ocultar dirección según tipo de pedido
 document.getElementById('tipoPedido').addEventListener('change', (e) => {
@@ -772,6 +901,7 @@ document.getElementById('formVenta').addEventListener('submit', (e) => {
         }
     });
 });
+
 
 // POP-UP PEDIDOS
 let ultimoPedidoId = null;

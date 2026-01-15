@@ -1,0 +1,25 @@
+{
+  "name": "LaVespucio - Sistema de Pedidos",
+  "short_name": "LaVespucio",
+  "description": "Aplicación para tomar pedidos en LaVespucio",
+  "start_url": "/mozo",
+  "scope": "/mozo/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#28a745",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "./icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "./icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
