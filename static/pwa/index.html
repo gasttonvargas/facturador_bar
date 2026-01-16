@@ -12,11 +12,10 @@
     
     <!-- Manifest -->
     <link rel="manifest" href="/mozo/manifest.json">
-
     
     <!-- Icons -->
- <link rel="icon" type="image/png" sizes="192x192" href="/mozo/icon-192.png">
-<link rel="apple-touch-icon" href="/mozo/icon-192.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/mozo/icon-192.png">
+    <link rel="apple-touch-icon" href="/mozo/icon-192.png">
 
     <style>
         * {
@@ -32,6 +31,7 @@
             overflow-x: hidden;
             user-select: none;
             -webkit-user-select: none;
+            padding-bottom: 80px;
         }
 
         /* ===== HEADER ===== */
@@ -56,6 +56,12 @@
             font-weight: 700;
         }
 
+        .header-actions {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
         .mesa-badge {
             background: rgba(255,255,255,0.3);
             padding: 6px 14px;
@@ -64,11 +70,22 @@
             font-weight: 600;
         }
 
+        .btn-volver {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
         /* ===== VISTAS ===== */
         .view {
             display: none;
             padding: 15px;
-            min-height: calc(100vh - 140px);
+            min-height: calc(100vh - 60px);
         }
 
         .view.active {
@@ -274,8 +291,8 @@
             left: 0;
             right: 0;
             background: white;
-            padding: 15px;
-            box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+            padding: 12px 15px;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.15);
             z-index: 999;
         }
 
@@ -283,7 +300,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 12px;
+            margin-bottom: 10px;
         }
 
         .carrito-items {
@@ -299,12 +316,12 @@
 
         .btn-enviar {
             width: 100%;
-            padding: 16px;
+            padding: 14px;
             background: #28a745;
             color: white;
             border: none;
             border-radius: 12px;
-            font-size: 18px;
+            font-size: 16px;
             font-weight: 700;
             cursor: pointer;
             transition: all 0.2s;
@@ -415,18 +432,6 @@
             to { transform: rotate(360deg); }
         }
 
-        /* ===== BOTÓN VOLVER ===== */
-        .btn-volver {
-            background: rgba(255,255,255,0.2);
-            border: none;
-            color: white;
-            padding: 8px 16px;
-            border-radius: 8px;
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-        }
-
         /* ===== RESPONSIVE ===== */
         @media (max-width: 360px) {
             .mesas-grid {
@@ -458,8 +463,10 @@
     <header class="app-header">
         <div class="header-content">
             <div class="app-title">🍔 LaVespucio</div>
-            <span class="mesa-badge" id="mesaBadge" style="display:none;"></span>
-            <button class="btn-volver" id="btnVolver" style="display:none;">← Volver</button>
+            <div class="header-actions">
+                <span class="mesa-badge" id="mesaBadge" style="display:none;"></span>
+                <button class="btn-volver" id="btnVolver" style="display:none;">← Volver</button>
+            </div>
         </div>
     </header>
 
@@ -473,9 +480,6 @@
     <div id="viewProductos" class="view">
         <div class="categorias-tabs" id="categoriasContainer"></div>
         <div class="productos-grid" id="productosContainer"></div>
-        
-        <!-- ESPACIO PARA EL FOOTER -->
-        <div style="height: 120px;"></div>
     </div>
 
     <!-- FOOTER CARRITO -->
@@ -505,7 +509,7 @@
         <div class="spinner"></div>
     </div>
 
-   <script src="/mozo/app.js"></script>
+    <script src="/mozo/app.js"></script>
 
 </body>
 </html>

@@ -1,4 +1,3 @@
-
 {% extends "base.html" %}
 {% block content %}
 
@@ -19,18 +18,6 @@ body{margin:0;background:#ececec}
 
 .izq h2{margin:0 0 10px;font-size:20px;display:flex;align-items:center;gap:8px;}
 .turno-badge{background:#28a745;padding:4px 10px;border-radius:12px;font-size:12px;}
-
-.nav{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;}
-.nav a{
-    color:white;
-    text-decoration:none;
-    font-size:12px;
-    padding:8px 12px;
-    background:#333;
-    border-radius:6px;
-    transition:0.2s;
-}
-.nav a:hover{background:#444;}
 
 /* ===== OPCIONES DE VENTA ===== */
 .venta-opciones{
@@ -154,25 +141,15 @@ body{margin:0;background:#ececec}
 }
 
 /* ===== PEDIDO ACTUAL ===== */
-#atajo{
-    width:100%;
-    padding:10px;
-    font-size:14px;
-    margin-bottom:10px;
-    border-radius:6px;
-    border:none;
-    background:#444;
-    color:white;
-}
-
 .pedido{
     flex:1;
     overflow-y:auto;
     background:#2b2b2b;
     padding:12px;
     border-radius:8px;
-    max-height:22vh;
-    min-height:150px;
+    max-height:30vh;
+    min-height:180px;
+    margin-bottom:12px;
 }
 
 .pedido:empty::before{
@@ -566,8 +543,6 @@ a.cerrar{
         </div>
     </div>
 
-    <input id="atajo" type="text" placeholder="🔍 Atajo rápido (me, mn, pe...)" autofocus>
-
     <div class="pedido" id="pedido"></div>
     <div class="total" id="total">$0</div>
 
@@ -585,7 +560,7 @@ a.cerrar{
         <div class="ventas-lista">
             {% for v in ventas %}
             <div class="item">
-                <span>#{{ v.id }} — ${{ v.total }} [{{ v.tipo_pedido }}]</span>
+                <span>#{{ v.id }} – ${{ v.total }} [{{ v.tipo_pedido }}]</span>
                 <div>
                     <a href="{{ url_for('imprimir_comanda', venta_id=v.id) }}" 
                        style="color:#17a2b8;margin-right:6px;" target="_blank">🖨️</a>
@@ -699,7 +674,6 @@ buscador.addEventListener('input', (e) => {
     const termino = e.target.value.toLowerCase().trim();
     
     if(termino === '') {
-        // Mostrar todo
         productos.forEach(p => {
             p.classList.remove('oculto', 'destacado');
         });
@@ -712,7 +686,6 @@ buscador.addEventListener('input', (e) => {
     
     let encontrados = 0;
     
-    // Filtrar productos
     productos.forEach(prod => {
         const nombre = prod.dataset.nombre.toLowerCase();
         if(nombre.includes(termino)) {
@@ -725,7 +698,6 @@ buscador.addEventListener('input', (e) => {
         }
     });
     
-    // Ocultar categorías vacías
     categorias.forEach(cat => {
         const productosVisibles = cat.querySelectorAll('.producto:not(.oculto)');
         if(productosVisibles.length === 0) {
@@ -735,7 +707,6 @@ buscador.addEventListener('input', (e) => {
         }
     });
     
-    // Mostrar info de resultados
     if(encontrados === 0) {
         resultadosInfo.textContent = '❌ No se encontraron productos';
         resultadosInfo.style.color = '#dc3545';
@@ -745,7 +716,6 @@ buscador.addEventListener('input', (e) => {
     }
 });
 
-// Limpiar búsqueda con ESC
 buscador.addEventListener('keydown', (e) => {
     if(e.key === 'Escape') {
         e.target.value = '';
@@ -753,7 +723,6 @@ buscador.addEventListener('keydown', (e) => {
     }
 });
 
-// Mostrar/ocultar dirección según tipo de pedido
 document.getElementById('tipoPedido').addEventListener('change', (e) => {
     let direccionGrupo = document.getElementById('direccionGrupo');
     if(e.target.value === 'delivery') {
@@ -763,7 +732,6 @@ document.getElementById('tipoPedido').addEventListener('change', (e) => {
     }
 });
 
-// CALCULADORA DE VUELTO
 let pagoInput = document.getElementById('pagoRecibido');
 let vueltoDisplay = document.getElementById('vueltoDisplay');
 let vueltoValor = document.getElementById('vueltoValor');
@@ -782,7 +750,6 @@ function calcularVuelto() {
     }
 }
 
-// CARRITO
 function cambiar(id,d){
     let i=document.getElementById("prod_"+id);
     let v=parseInt(i.value)||0; 
@@ -790,7 +757,6 @@ function cambiar(id,d){
     if(v<0)v=0; 
     i.value=v;
     
-    // Mostrar/ocultar extras
     let extrasDiv = document.getElementById("extras_"+id);
     if(extrasDiv) {
         if(v > 0) {
@@ -800,7 +766,6 @@ function cambiar(id,d){
         }
     }
     
-    // Actualizar pedido
     let productoDiv = i.closest('.producto');
     if(v===0) {
         delete pedido[id];
@@ -822,7 +787,6 @@ function render(){
     total=0;
     
     Object.entries(pedido).forEach(([id, p])=>{
-        // Obtener extras y observaciones
         let extrasDiv = document.getElementById("extras_"+id);
         if(extrasDiv) {
             let extras = [];
@@ -856,7 +820,6 @@ function render(){
     calcularVuelto();
 }
 
-// Actualizar render cuando cambian extras
 document.querySelectorAll('.producto-extras').forEach(div => {
     div.querySelectorAll('input, textarea').forEach(el => {
         el.addEventListener('change', render);
@@ -864,18 +827,6 @@ document.querySelectorAll('.producto-extras').forEach(div => {
     });
 });
 
-// ATAJOS
-const atajos={me:1, mc:2, mn:3, pe:10, coc:20};
-document.getElementById("atajo").addEventListener("keydown",e=>{
-    if(e.key==="Enter"){
-        e.preventDefault();
-        let id=atajos[e.target.value.toLowerCase()];
-        if(id)cambiar(id,1);
-        e.target.value="";
-    }
-});
-
-// ENVIAR FORMULARIO
 document.getElementById('formVenta').addEventListener('submit', (e) => {
     if(total === 0) {
         e.preventDefault();
@@ -883,7 +834,6 @@ document.getElementById('formVenta').addEventListener('submit', (e) => {
         return;
     }
     
-    // Agregar extras y observaciones
     Object.entries(pedido).forEach(([id, p]) => {
         if(p.extras) {
             let input = document.createElement('input');
@@ -902,8 +852,6 @@ document.getElementById('formVenta').addEventListener('submit', (e) => {
     });
 });
 
-
-// POP-UP PEDIDOS
 let ultimoPedidoId = null;
 let pedidosPendientes = [];
 let audio = document.getElementById('notifSound');
@@ -923,21 +871,17 @@ document.addEventListener('click', () => {
     }
 }, { once: true });
 
-
 function checkPedidos(){
     fetch("/api/pedidos/nuevos/detalle")
         .then(r => r.json())
         .then(data => {
             if (!data.pedidos || data.pedidos.length === 0) return;
 
-            // Tomamos el último pedido
             let ultimo = data.pedidos[data.pedidos.length - 1];
 
             if (ultimoPedidoId !== ultimo.id) {
                 ultimoPedidoId = ultimo.id;
-
                 pedidosPendientes = [ultimo];
-
                 showPopupPedido();
                 playSound();
             }
@@ -945,11 +889,10 @@ function checkPedidos(){
         .catch(err => console.log("Error chequeando pedidos:", err));
 }
 
-
 function showPopupPedido(){
     let detalle = "";
     pedidosPendientes.forEach(p=>{
-        detalle += `<strong>Mesa ${p.mesa} — $${p.total}</strong><br>`;
+        detalle += `<strong>Mesa ${p.mesa} – $${p.total}</strong><br>`;
         p.detalle.forEach(d=>{
             detalle += `  ${d.cantidad} × ${d.producto} ($${d.precio*d.cantidad})<br>`;
             if(d.extras) detalle += `  <em>✓ Con: ${d.extras}</em><br>`;

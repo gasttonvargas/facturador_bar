@@ -595,6 +595,50 @@ def api_pedidos_nuevos_detalle():
     return jsonify({"pedidos": pedidos_lista})
 
 # ========== PRODUCTOS ==========
+# ========== API PRODUCTOS (Agregar ANTES de la línea 597) ==========
+@app.route("/api/productos")
+def api_productos():
+    """Endpoint para obtener productos y categorías en formato JSON para el PWA"""
+    try:
+        with get_db() as con:
+            productos_db = con.execute(
+                "SELECT * FROM productos WHERE precio > 0 ORDER BY categoria, nombre"
+            ).fetchall()
+            
+            productos_lista = []
+            categorias_set = set()
+            
+            for p in productos_db:
+                # Convertir sqlite3.Row a diccionario
+                producto_dict = {
+                    "id": str(p["id"]),
+                    "nombre": p["nombre"],
+                    "precio": p["precio"],
+                    "categoria": p["categoria"]
+                }
+                
+                # Agregar tipo solo si existe
+                try:
+                    producto_dict["tipo"] = p["tipo"] if p["tipo"] else "normal"
+                except (KeyError, IndexError):
+                    producto_dict["tipo"] = "normal"
+                
+                productos_lista.append(producto_dict)
+                categorias_set.add(p["categoria"])
+            
+            categorias_lista = sorted(list(categorias_set))
+        
+        return jsonify({
+            "productos": productos_lista,
+            "categorias": categorias_lista
+        })
+    
+    except Exception as e:
+        print(f"❌ Error en /api/productos: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({"error": str(e)}), 500
+
 @app.route("/productos", methods=["GET", "POST"])
 @admin_required
 def productos():
