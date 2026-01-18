@@ -127,8 +127,9 @@ def init_db():
         """)
 
 # ========= AUTO INIT =========
-if DATABASE_URL:
+if __name__ == "__main__":
     init_db()
+
 
 
 # ========== DECORADORES DE SEGURIDAD ==========
