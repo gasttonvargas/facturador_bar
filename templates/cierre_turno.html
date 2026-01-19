@@ -38,6 +38,11 @@ h2 {
     font-weight: 700;
 }
 
+.dia-semana {
+    font-weight: 700;
+    font-size: 16px;
+}
+
 h3 {
     margin: 30px 0 15px;
     color: #1e1e1e;
@@ -93,7 +98,7 @@ tr:hover {
         <div class="label">TOTAL DEL TURNO #{{ turno.id }}</div>
         <div class="monto">${{ total }}</div>
         <p style="margin-top: 15px; font-size: 14px; opacity: 0.8;">
-            Fecha: {{ turno.fecha }}
+            <span class="dia-semana">{{ turno.fecha | dia_semana }}</span>
         </p>
     </div>
 

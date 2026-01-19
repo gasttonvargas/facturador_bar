@@ -61,6 +61,12 @@ h2 {
     color: #999;
 }
 
+.dia-semana {
+    font-weight: 700;
+    color: #007bff;
+    font-size: 16px;
+}
+
 .card {
     background: white;
     padding: 30px;
@@ -101,7 +107,7 @@ h2 {
 
 .actions-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmin(220px, 1fr));
     gap: 15px;
 }
 
@@ -170,7 +176,7 @@ h2 {
             </div>
             <p class="label">
                 {% if stats.turno %}
-                    Abierto desde {{ stats.turno['fecha'] }}
+                    <span class="dia-semana">{{ stats.turno['dia_semana'] }}</span>
                 {% else %}
                     Sin turno activo
                 {% endif %}
@@ -225,7 +231,7 @@ h2 {
             </div>
             <div class="turno-item">
                 <p>Apertura</p>
-                <p>{{ stats.turno['fecha'] }}</p>
+                <p class="dia-semana">{{ stats.turno['dia_semana'] }}</p>
             </div>
             <div class="turno-item">
                 <p>Usuario</p>

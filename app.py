@@ -1,15 +1,51 @@
 from flask import Flask, render_template, request, redirect, session, flash, jsonify, send_from_directory
 import os
-from datetime import date, datetime, timedelta
 from functools import wraps
 from hashlib import sha256
 from contextlib import contextmanager
-
+from datetime import date, datetime, timedelta
+import locale
 import psycopg2
 from psycopg2.extras import RealDictCursor
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "dev_secret")
+
+#Hora
+try:
+    locale.setlocale(locale.LC_TIME, 'es_ES.UTF-8')
+except:
+    try:
+        locale.setlocale(locale.LC_TIME, 'es_ES')
+    except:
+        pass  
+    
+@app.template_filter('dia_semana')
+def dia_semana_filter(fecha_str):
+    return obtener_dia_semana(fecha_str)
+
+# Función helper para obtener el día de la semana en español
+def obtener_dia_semana(fecha_str):
+    """Convierte una fecha string a formato 'Lunes 19/01'"""
+    dias = {
+        0: 'Lunes',
+        1: 'Martes',
+        2: 'Miércoles',
+        3: 'Jueves',
+        4: 'Viernes',
+        5: 'Sábado',
+        6: 'Domingo'
+    }
+    
+    if isinstance(fecha_str, str):
+        fecha = datetime.strptime(fecha_str, '%Y-%m-%d').date()
+    else:
+        fecha = fecha_str
+    
+    dia_nombre = dias[fecha.weekday()]
+    dia_mes = fecha.strftime('%d/%m')
+    
+    return f"{dia_nombre} {dia_mes}"
 
 # ========= DATABASE =========
 DATABASE_URL = os.environ.get("DATABASE_URL")
@@ -220,6 +256,12 @@ def dashboard():
         cur = con.cursor()
         turno = turno_activo()
         
+        # Agregar día de la semana al turno
+        if turno:
+            turno_dict = dict(turno)
+            turno_dict['dia_semana'] = obtener_dia_semana(turno['fecha'])
+            turno = turno_dict
+        
         cur.execute(
             "SELECT COUNT(*) as total FROM ventas WHERE DATE(fecha_hora) = CURRENT_DATE AND estado='OK'"
         )
@@ -252,6 +294,12 @@ def ventas():
         productos = cur.fetchall()
         turno = turno_activo()
         
+        # Agregar día de la semana al turno
+        if turno:
+            turno_dict = dict(turno)
+            turno_dict['dia_semana'] = obtener_dia_semana(turno['fecha'])
+            turno = turno_dict
+        
         if request.method == "POST":
             medio = request.form["medio_pago"]
             tipo_pedido = request.form.get("tipo_pedido", "mesa")
@@ -260,7 +308,6 @@ def ventas():
             pago_recibido = request.form.get("pago_recibido")
             pago_recibido = int(pago_recibido) if pago_recibido and pago_recibido.isdigit() else 0
             
-            # Determinar estado_delivery según tipo de pedido
             if tipo_pedido == 'delivery':
                 estado_delivery = 'listo'
             else:
@@ -750,7 +797,15 @@ def turnos():
     with get_db() as con:
         cur = con.cursor()
         cur.execute("SELECT * FROM turnos ORDER BY id DESC LIMIT 30")
-        turnos = cur.fetchall()
+        turnos_db = cur.fetchall()
+        
+        # Procesar turnos para agregar día de la semana
+        turnos = []
+        for t in turnos_db:
+            turno_dict = dict(t)
+            turno_dict['dia_semana'] = obtener_dia_semana(t['fecha'])
+            turnos.append(turno_dict)
+        
         cur.execute("SELECT COALESCE(SUM(total),0) total FROM turnos WHERE estado='CERRADO'")
         mensual = cur.fetchone()["total"]
         
